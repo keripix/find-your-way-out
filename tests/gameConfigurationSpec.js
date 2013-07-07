@@ -19,17 +19,16 @@ describe("Game Configuration", function(){
     });
 
     it("Should parsed the level correctly", function(){
-      // var gameConf = gameConfig.init(conf);
+      var gameConf = gameConfig.init(conf);
 
-      // gameConf.getLevel("1").should.be.ok;
+      expect(gameConf.getLevel("1")).toBeDefined();
 
-      // var level1 = gameConf.getLevel("1");
+      var level1 = gameConf.getLevel("1");
 
-      // level1.should.have.property("blocks");
-      // level1.start.x.should.equal(300);
-      // level1.start.y.should.equal(580);
+      expect(level1.start.x).toEqual(300);
+      expect(level1.start.y).toEqual(580);
 
-      // gameConf.getLevel(2).start.y.should.equal(500);
+      expect(gameConf.getLevel(2).start.y).toEqual(500);
     });
   });
 });

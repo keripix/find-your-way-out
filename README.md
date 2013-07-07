@@ -67,6 +67,12 @@ What if, in order to set the configuration of each level, I just need to write t
       ]
     }
 
+## TODO
+
+1. Make it more challenging? :p
+2. Level Editor :D
+3. Use countdown
+
 ## License
 Copyright (c) 2013 A. Akbar Hidayat
 Licensed under the MIT license.

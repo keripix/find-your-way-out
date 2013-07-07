@@ -22,6 +22,41 @@ exports.init = function(conf){
   return new GameConfiguration(conf)
 }
 },{}],2:[function(require,module,exports){
+'use strict';
+
+exports.parsePosition = function(position){
+  var results = [];
+
+  // if this is not an array, then make it an array
+  if (toString.call(position) != '[object Array]'){
+    position = [position];
+  }
+
+  position.forEach(function(pos){
+    results.push({
+      x: pos.x || 0,
+      y: pos.y || 0,
+      width: pos.width || 10,
+      height: pos.height || 10,
+      color: pos.color || "#000000"
+    });
+  });
+
+  return results;
+};
+
+exports.generate = function(canvas, position){
+  var points = this.parsePosition(position),
+      ctx = canvas.getContext('2d');
+
+  points.forEach(function(p){
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x, p.y, p.width, p.height);
+  });
+
+  return canvas;
+};
+},{}],3:[function(require,module,exports){
 module.exports = {
   "world": {
     "width": 600,
@@ -76,60 +111,33 @@ module.exports = {
     }
   ]
 }
-},{}],3:[function(require,module,exports){
-'use strict';
-
-exports.parsePosition = function(position){
-  var results = [];
-
-  // if this is not an array, then make it an array
-  if (toString.call(position) != '[object Array]'){
-    position = [position];
-  }
-
-  position.forEach(function(pos){
-    results.push({
-      x: pos.x || 0,
-      y: pos.y || 0,
-      width: pos.width || 10,
-      height: pos.height || 10,
-      color: pos.color || "#000000"
-    });
-  });
-
-  return results;
-};
-
-exports.generate = function(canvas, position){
-  var points = this.parsePosition(position),
-      ctx = canvas.getContext('2d');
-
-  points.forEach(function(p){
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x, p.y, p.width, p.height);
-  });
-
-  return canvas;
-};
 },{}],4:[function(require,module,exports){
 module.exports = function(actor, blocks, exit){
   var check = "x",
-      moving = "y";
+      moving = "y",
+      bound = actor.h;
 
-  if (actor.x >= (exit.x-actor.w) && actor.y >= (exit.y - actor.h)){
+  if (actor.x >= (exit.x - actor.w) && actor.y >= (exit.y - actor.h)){
     actor.isMoving = false;
     actor.hasWon = true;
+    return;
+  }
+
+  // not good
+  if (actor.x >= 600 || actor.y >= 600 || actor.x <= 0 || actor.y <= 0){
+    actor.hasLost = true;
     return;
   }
 
   if (actor.moving.x !== 0) {
     check = "y";
     moving = "x";
+    bound = actor.w;
   }
 
   blocks.forEach(function(b){
     if (b[check] === actor[check]) {
-      if (actor[moving] <= (b[moving] + actor.h)) {
+      if (actor[moving] <= (b[moving] + bound)) {
         actor.isMoving = false;
         actor.moving.x = 0;
         actor.moving.y = 0;
@@ -163,11 +171,13 @@ var ctx,
       h: 0,
       moving: {x: 0, y: 0},
       isMoving: false,
-      hasWon: false
+      hasWon: false,
+      hasLost: false
     },
     currentLevel = 1,
     gameLevel,
-    canvas;
+    canvas,
+    speed = 5;
 
 // Bind movement
 shell.bind("move-left", "left", "A");
@@ -190,6 +200,8 @@ function startLevel(canvas, gameLevel){
   actor.h = gameLevel.start.height;
   actor.color = gameLevel.start.color;
   actor.hasWon = false;
+  actor.isMoving = false;
+  actor.hasLost = false;
 }
 
 // when ready
@@ -205,8 +217,12 @@ shell.on("init", function(){
 
 shell.on("tick", function() {
   if (actor.hasWon) {
-    console.log("wohoo");
     gameLevel = game.getLevel(++currentLevel);
+    startLevel(canvas, gameLevel);
+    return;
+  }
+
+  if (actor.hasLost){
     startLevel(canvas, gameLevel);
     return;
   }
@@ -217,20 +233,20 @@ shell.on("tick", function() {
   }
 
   if(shell.wasDown("move-left")) {
-    actor.moving.x = -5;
+    actor.moving.x = -speed;
     actor.moving.y = 0;
     actor.isMoving = true;
   } else if(shell.wasDown("move-right")) {
-    actor.moving.x = 5;
+    actor.moving.x = speed;
     actor.moving.y = 0;
     actor.isMoving = true;
   } else if(shell.wasDown("move-up")) {
     actor.moving.x = 0;
-    actor.moving.y = -5;
+    actor.moving.y = -speed;
     actor.isMoving = true;
   } else if(shell.wasDown("move-down")) {
     actor.moving.x = 0;
-    actor.moving.y = 5;
+    actor.moving.y = speed;
     actor.isMoving = true;
   }
 });
@@ -251,7 +267,7 @@ shell.on("render", function() {
 
 
 
-},{"./gameConfiguration":1,"./worldGenerator":3,"../conf/game":2,"./aware":4,"game-shell":6}],7:[function(require,module,exports){
+},{"./gameConfiguration":1,"./worldGenerator":2,"../conf/game":3,"./aware":4,"game-shell":6}],7:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -845,36 +861,6 @@ exports.format = function(f) {
 };
 
 },{"events":8}],10:[function(require,module,exports){
-// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
- 
-// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
- 
-// MIT license
-var lastTime = 0;
-var vendors = ['ms', 'moz', 'webkit', 'o'];
-for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
-                               || window[vendors[x]+'CancelRequestAnimationFrame'];
-}
-
-if (!window.requestAnimationFrame)
-    window.requestAnimationFrame = function(callback, element) {
-        var currTime = new Date().getTime();
-        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-        var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
-          timeToCall);
-        lastTime = currTime + timeToCall;
-        return id;
-    };
-
-if (!window.cancelAnimationFrame)
-    window.cancelAnimationFrame = function(id) {
-        clearTimeout(id);
-    };
-
-},{}],11:[function(require,module,exports){
 //Adapted from here: https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel?redirectlocale=en-US&redirectslug=DOM%2FMozilla_event_reference%2Fwheel
 
 var prefix = "", _addEventListener, onwheel, support;
@@ -934,6 +920,36 @@ module.exports = function( elem, callback, useCapture ) {
     _addWheelListener( elem, "MozMousePixelScroll", callback, useCapture );
   }
 };
+},{}],11:[function(require,module,exports){
+// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+ 
+// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+ 
+// MIT license
+var lastTime = 0;
+var vendors = ['ms', 'moz', 'webkit', 'o'];
+for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+                               || window[vendors[x]+'CancelRequestAnimationFrame'];
+}
+
+if (!window.requestAnimationFrame)
+    window.requestAnimationFrame = function(callback, element) {
+        var currTime = new Date().getTime();
+        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+        var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+          timeToCall);
+        lastTime = currTime + timeToCall;
+        return id;
+    };
+
+if (!window.cancelAnimationFrame)
+    window.cancelAnimationFrame = function(id) {
+        clearTimeout(id);
+    };
+
 },{}],12:[function(require,module,exports){
 if(window.performance.now) {
   module.exports = function() { return window.performance.now() }
@@ -1660,76 +1676,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"domready":13,"invert-hash":14,"uniq":15,"lower-bound":16,"vkey":17,"iota-array":18}],13:[function(require,module,exports){
-/*!
-  * domready (c) Dustin Diaz 2012 - License MIT
-  */
-!function (name, definition) {
-  if (typeof module != 'undefined') module.exports = definition()
-  else if (typeof define == 'function' && typeof define.amd == 'object') define(definition)
-  else this[name] = definition()
-}('domready', function (ready) {
-
-  var fns = [], fn, f = false
-    , doc = document
-    , testEl = doc.documentElement
-    , hack = testEl.doScroll
-    , domContentLoaded = 'DOMContentLoaded'
-    , addEventListener = 'addEventListener'
-    , onreadystatechange = 'onreadystatechange'
-    , readyState = 'readyState'
-    , loaded = /^loade|c/.test(doc[readyState])
-
-  function flush(f) {
-    loaded = 1
-    while (f = fns.shift()) f()
-  }
-
-  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
-    doc.removeEventListener(domContentLoaded, fn, f)
-    flush()
-  }, f)
-
-
-  hack && doc.attachEvent(onreadystatechange, fn = function () {
-    if (/^c/.test(doc[readyState])) {
-      doc.detachEvent(onreadystatechange, fn)
-      flush()
-    }
-  })
-
-  return (ready = hack ?
-    function (fn) {
-      self != top ?
-        loaded ? fn() : fns.push(fn) :
-        function () {
-          try {
-            testEl.doScroll('left')
-          } catch (e) {
-            return setTimeout(function() { ready(fn) }, 50)
-          }
-          fn()
-        }()
-    } :
-    function (fn) {
-      loaded ? fn() : fns.push(fn)
-    })
-})
-},{}],14:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
-},{}],15:[function(require,module,exports){
+},{"events":8,"util":9,"./lib/mousewheel-polyfill.js":10,"./lib/raf-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"uniq":13,"domready":14,"vkey":15,"invert-hash":16,"lower-bound":17,"iota-array":18}],13:[function(require,module,exports){
 "use strict"
 
 function unique_pred(list, compare) {
@@ -1787,63 +1734,62 @@ function unique(list, compare, sorted) {
 }
 
 module.exports = unique
-},{}],16:[function(require,module,exports){
-"use strict"
+},{}],14:[function(require,module,exports){
+/*!
+  * domready (c) Dustin Diaz 2012 - License MIT
+  */
+!function (name, definition) {
+  if (typeof module != 'undefined') module.exports = definition()
+  else if (typeof define == 'function' && typeof define.amd == 'object') define(definition)
+  else this[name] = definition()
+}('domready', function (ready) {
 
-function lowerBound_cmp(array, value, compare, lo, hi) {
-  lo = lo|0
-  hi = hi|0
-  while(lo < hi) {
-    var m = (lo + hi) >>> 1
-      , v = compare(value, array[m])
-    if(v < 0) {
-      hi = m-1
-    } else if(v > 0) {
-      lo = m+1
-    } else {
-      hi = m
+  var fns = [], fn, f = false
+    , doc = document
+    , testEl = doc.documentElement
+    , hack = testEl.doScroll
+    , domContentLoaded = 'DOMContentLoaded'
+    , addEventListener = 'addEventListener'
+    , onreadystatechange = 'onreadystatechange'
+    , readyState = 'readyState'
+    , loaded = /^loade|c/.test(doc[readyState])
+
+  function flush(f) {
+    loaded = 1
+    while (f = fns.shift()) f()
+  }
+
+  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
+    doc.removeEventListener(domContentLoaded, fn, f)
+    flush()
+  }, f)
+
+
+  hack && doc.attachEvent(onreadystatechange, fn = function () {
+    if (/^c/.test(doc[readyState])) {
+      doc.detachEvent(onreadystatechange, fn)
+      flush()
     }
-  }
-  if(compare(array[lo], value) <= 0) {
-    return lo
-  }
-  return lo - 1
-}
+  })
 
-function lowerBound_def(array, value, lo, hi) {
-  lo = lo|0
-  hi = hi|0
-  while(lo < hi) {
-    var m = (lo + hi) >>> 1
-    if(value < array[m]) {
-      hi = m-1
-    } else if(value > array[m]) {
-      lo = m+1
-    } else {
-      hi = m
-    }
-  }
-  if(array[lo] <= value) {
-    return lo
-  }
-  return lo - 1
-}
-
-function lowerBound(array, value, compare, lo, hi) {
-  if(!lo) {
-    lo = 0
-  }
-  if(typeof(hi) !== "number") {
-    hi = array.length-1
-  }
-  if(compare) {
-    return lowerBound_cmp(array, value, compare, lo, hi)
-  }
-  return lowerBound_def(array, value, lo, hi)
-}
-
-module.exports = lowerBound
-},{}],17:[function(require,module,exports){
+  return (ready = hack ?
+    function (fn) {
+      self != top ?
+        loaded ? fn() : fns.push(fn) :
+        function () {
+          try {
+            testEl.doScroll('left')
+          } catch (e) {
+            return setTimeout(function() { ready(fn) }, 50)
+          }
+          fn()
+        }()
+    } :
+    function (fn) {
+      loaded ? fn() : fns.push(fn)
+    })
+})
+},{}],15:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -1982,6 +1928,76 @@ for(i = 112; i < 136; ++i) {
 }
 
 })()
+},{}],16:[function(require,module,exports){
+"use strict"
+
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
+},{}],17:[function(require,module,exports){
+"use strict"
+
+function lowerBound_cmp(array, value, compare, lo, hi) {
+  lo = lo|0
+  hi = hi|0
+  while(lo < hi) {
+    var m = (lo + hi) >>> 1
+      , v = compare(value, array[m])
+    if(v < 0) {
+      hi = m-1
+    } else if(v > 0) {
+      lo = m+1
+    } else {
+      hi = m
+    }
+  }
+  if(compare(array[lo], value) <= 0) {
+    return lo
+  }
+  return lo - 1
+}
+
+function lowerBound_def(array, value, lo, hi) {
+  lo = lo|0
+  hi = hi|0
+  while(lo < hi) {
+    var m = (lo + hi) >>> 1
+    if(value < array[m]) {
+      hi = m-1
+    } else if(value > array[m]) {
+      lo = m+1
+    } else {
+      hi = m
+    }
+  }
+  if(array[lo] <= value) {
+    return lo
+  }
+  return lo - 1
+}
+
+function lowerBound(array, value, compare, lo, hi) {
+  if(!lo) {
+    lo = 0
+  }
+  if(typeof(hi) !== "number") {
+    hi = array.length-1
+  }
+  if(compare) {
+    return lowerBound_cmp(array, value, compare, lo, hi)
+  }
+  return lowerBound_def(array, value, lo, hi)
+}
+
+module.exports = lowerBound
 },{}],18:[function(require,module,exports){
 "use strict"
 

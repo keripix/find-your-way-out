@@ -44,9 +44,6 @@ What if, in order to set the configuration of each level, I just need to write t
 
     }
 
-## Contributing
-In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
-
 ## License
 Copyright (c) 2013 A. Akbar Hidayat
 Licensed under the MIT license.

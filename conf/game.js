@@ -1,7 +1,7 @@
 module.exports = {
-  "world": {
-    "width": 600,
-    "height": 600,
+  world: {
+    width: 600,
+    height: 600,
     actor: {
       width: 10,
       height: 10,
@@ -23,7 +23,7 @@ module.exports = {
       blocks: [
       {x: 300, y: 290},
       {x: 50, y: 60},
-      {x: 21, y: 31}
+      {x: 20, y: 30}
       ],
       actor: {
         x: 300,
@@ -37,9 +37,9 @@ module.exports = {
     {
       blocks: [
       {x: 1, y: 50},
-      {x: 23, y: 500},
-      {x: 301, y: 400},
-      {x: 491, y: 111}
+      {x: 20, y: 500},
+      {x: 300, y: 400},
+      {x: 490, y: 111}
       ],
       actor: {
         x: 300,

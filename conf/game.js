@@ -13,6 +13,10 @@ module.exports = {
       {x: 50, y: 60},
       {x: 21, y: 31}
       ],
+      "start": {
+        x: 300,
+        y: 580
+      },
       "out": {
         "position": {x: 600, y: 200},
         "width": "10",
@@ -25,6 +29,10 @@ module.exports = {
       {x: 301, y: 400},
       {x: 491, y: 111}
       ],
+      "start": {
+        x: 300,
+        y: 500
+      },
       "out": {
         "position": {x: 600, y: 200},
         "width": "10",

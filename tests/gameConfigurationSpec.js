@@ -27,6 +27,10 @@ describe("Game Configuration", function(){
       var level1 = gameConf.getLevel("1");
 
       level1.should.have.property("blocks");
+      level1.start.x.should.equal(300);
+      level1.start.y.should.equal(580);
+
+      gameConf.getLevel(2).start.y.should.equal(500);
     });
   });
 });

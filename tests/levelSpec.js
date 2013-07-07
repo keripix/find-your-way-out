@@ -8,6 +8,14 @@ describe("Game Configuration", function(){
       var gameConf = level.init(conf);
 
       gameConf.should.have.ownProperty("world");
+      gameConf.should.have.ownProperty("levels");
+
+      gameConf.levels.should.have.ownProperty("1");
+      gameConf.levels.should.have.ownProperty("2");
+
+      gameConf.world.width.should.equal(600);
+      gameConf.world["background-color"].should.equal("black");
+
     });
   });
 });

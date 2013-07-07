@@ -17,5 +17,11 @@ describe("Game Configuration", function(){
       gameConf.world["background-color"].should.equal("black");
 
     });
+
+    it("Should throw Error if bad conf is passed", function(){
+      (function(){
+        level.init({bla:1,bli:2});
+      }).should.throw();
+    });
   });
 });

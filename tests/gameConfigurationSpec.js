@@ -23,10 +23,10 @@ describe("Game Configuration", function(){
 
       var level1 = gameConf.getLevel("1");
 
-      expect(level1.start.x).toEqual(300);
-      expect(level1.start.y).toEqual(580);
+      expect(level1.actor.x).toEqual(300);
+      expect(level1.actor.y).toEqual(580);
 
-      expect(gameConf.getLevel(2).start.y).toEqual(500);
+      expect(gameConf.getLevel(2).actor.y).toEqual(500);
     });
 
     it("Should not proceed when the level requested is more than what is available", function(){

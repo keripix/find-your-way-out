@@ -2,9 +2,16 @@ module.exports = {
   "world": {
     "width": 600,
     "height": 600,
-    "background-color": "black",
-    "box-color": "blue",
-    "actor": "white"
+    actor: {
+      width: 10,
+      height: 10,
+      color: "#ECF0F1"
+    },
+    out: {
+      width: 10,
+      height: 10,
+      color: "#27AE60"
+    }
   },
   "levels": [
     {
@@ -13,14 +20,11 @@ module.exports = {
       {x: 50, y: 60},
       {x: 21, y: 31}
       ],
-      "start": {
+      actor: {
         x: 300,
         y: 580,
-        width: 10,
-        height: 10,
-        color: "#ECF0F1"
       },
-      "out": {
+      out: {
         x: 590,
         y: 300,
         height: 10,
@@ -35,19 +39,16 @@ module.exports = {
       {x: 301, y: 400},
       {x: 491, y: 111}
       ],
-      "start": {
+      actor: {
         x: 300,
         y: 500,
         height: 10,
         width: 10,
         color: "#ECF0F1"
       },
-      "out": {
+      out: {
         x: 590,
-        y: 300,
-        width: 10,
-        height: 10,
-        color: "#27AE60"
+        y: 300
       }
     }
   ]

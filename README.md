@@ -16,7 +16,7 @@ What if, in order to set the configuration of each level, I just need to write t
             "box-color": "blue",
             "actor": "white"
         },
-        "1": {
+        "levels":[{
             blocks: [
                 {x: 1, y: 1},
                 {x: 50, y: 60},
@@ -27,8 +27,7 @@ What if, in order to set the configuration of each level, I just need to write t
                 "width": "10",
                 "height": "10"
             }
-        },
-        "2": {
+        },{
             blocks: [
                 {x: 1, y: 50},
                 {x: 23, y: 500},
@@ -40,8 +39,7 @@ What if, in order to set the configuration of each level, I just need to write t
                 "width": "10",
                 "height": "10"
             }
-        }
-
+        }]
     }
 
 ## License

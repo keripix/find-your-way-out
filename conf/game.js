@@ -6,8 +6,8 @@ module.exports = {
     "box-color": "blue",
     "actor": "white"
   },
-  "levels": {
-    "1": {
+  "levels": [
+    {
       blocks: [
       {x: 1, y: 1},
       {x: 50, y: 60},
@@ -18,8 +18,7 @@ module.exports = {
         "width": "10",
         "height": "10"
       }
-    },
-    "2": {
+    }, {
       blocks: [
       {x: 1, y: 50},
       {x: 23, y: 500},
@@ -32,5 +31,5 @@ module.exports = {
         "height": "10"
       }
     }
-  }
+  ]
 }

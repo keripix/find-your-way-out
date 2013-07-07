@@ -10,12 +10,7 @@ describe("Game Configuration", function(){
       gameConf.should.have.ownProperty("world");
       gameConf.should.have.ownProperty("levels");
 
-      gameConf.levels.should.have.ownProperty("1");
-      gameConf.levels.should.have.ownProperty("2");
-
-      gameConf.world.width.should.equal(600);
-      gameConf.world["background-color"].should.equal("black");
-
+      gameConf.levels.should.have.length(2);
     });
 
     it("Should throw Error if bad conf is passed", function(){

@@ -9,7 +9,7 @@ module.exports = {
   "levels": [
     {
       blocks: [
-      {x: 1, y: 1},
+      {x: 300, y: 1},
       {x: 50, y: 60},
       {x: 21, y: 31}
       ],

@@ -2,7 +2,9 @@
 
 A simple game I made in order to try out game-shell created by @mikolalysenko. This project is also my first try at using browserify. So, lets rock n roll.
 
-The purpose of this game is to find a way out of the box. Simple Game.
+The purpose of this game is to get the white box to the green box. Easy Game.
+
+![](pics/level-1.jpeg)
 
 **This game is still in progress**
 
@@ -11,37 +13,58 @@ The purpose of this game is to find a way out of the box. Simple Game.
 What if, in order to set the configuration of each level, I just need to write this:
 
     {
-        "world": {
-            "width": "600",
-            "height": "600",
-            "background-color": "black",
-            "box-color": "blue",
-            "actor": "white"
+      world: {
+        width: 600,
+        height: 600,
+        actor: {
+          width: 10,
+          height: 10,
+          color: "#ECF0F1"
         },
-        "levels":[{
-            blocks: [
-                {x: 1, y: 1},
-                {x: 50, y: 60},
-                {x: 21, y: 31}
-            ],
-            "out": {
-                "position": {x: 600, y: 200},
-                "width": "10",
-                "height": "10"
-            }
-        },{
-            blocks: [
-                {x: 1, y: 50},
-                {x: 23, y: 500},
-                {x: 301, y: 400},
-                {x: 491, y: 111}
-            ],
-            "out": {
-                "position": {x: 600, y: 200},
-                "width": "10",
-                "height": "10"
-            }
-        }]
+        out: {
+          width: 10,
+          height: 10,
+          color: "#27AE60"
+        },
+        blocks: {
+          width: 10,
+          height: 10,
+          color: "#000000"
+        }
+      },
+      levels: [
+        {
+          blocks: [
+          {x: 300, y: 290},
+          {x: 50, y: 60},
+          {x: 20, y: 30}
+          ],
+          actor: {
+            x: 300,
+            y: 580,
+          },
+          out: {
+            x: 590,
+            y: 300
+          }
+        },
+        {
+          blocks: [
+          {x: 10, y: 50},
+          {x: 20, y: 500},
+          {x: 300, y: 400},
+          {x: 490, y: 110}
+          ],
+          actor: {
+            x: 300,
+            y: 500
+          },
+          out: {
+            x: 590,
+            y: 300
+          }
+        }
+      ]
     }
 
 ## License

@@ -227,6 +227,7 @@ function startLevel(canvas, gameLevel){
   // TODO not beautifull
   actor.x = gameLevel.actor.x;
   actor.y = gameLevel.actor.y;
+  actor.moving = {x: 0, y: 0},
   actor.width = gameLevel.actor.width;
   actor.height = gameLevel.actor.height;
   actor.color = gameLevel.actor.color;
@@ -926,16 +927,6 @@ if (!window.cancelAnimationFrame)
     };
 
 },{}],11:[function(require,module,exports){
-if(window.performance.now) {
-  module.exports = function() { return window.performance.now() }
-} else if(window.performance.webktiNow) {
-  module.exports = function() { return window.performance.webkitNow() }
-} else if(Date.now) {
-  module.exports = Date.now
-} else {
-  module.exports = function() { return (new Date()).getTime() }
-}
-},{}],12:[function(require,module,exports){
 //Adapted from here: https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel?redirectlocale=en-US&redirectslug=DOM%2FMozilla_event_reference%2Fwheel
 
 var prefix = "", _addEventListener, onwheel, support;
@@ -995,6 +986,16 @@ module.exports = function( elem, callback, useCapture ) {
     _addWheelListener( elem, "MozMousePixelScroll", callback, useCapture );
   }
 };
+},{}],12:[function(require,module,exports){
+if(window.performance.now) {
+  module.exports = function() { return window.performance.now() }
+} else if(window.performance.webktiNow) {
+  module.exports = function() { return window.performance.webkitNow() }
+} else if(Date.now) {
+  module.exports = Date.now
+} else {
+  module.exports = function() { return (new Date()).getTime() }
+}
 },{}],6:[function(require,module,exports){
 "use strict"
 
@@ -1711,7 +1712,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":12,"./lib/hrtime-polyfill.js":11,"domready":13,"vkey":14,"invert-hash":15,"lower-bound":16,"iota-array":17,"uniq":18}],13:[function(require,module,exports){
+},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"domready":13,"vkey":14,"uniq":15,"lower-bound":16,"invert-hash":17,"iota-array":18}],13:[function(require,module,exports){
 /*!
   * domready (c) Dustin Diaz 2012 - License MIT
   */
@@ -1908,17 +1909,61 @@ for(i = 112; i < 136; ++i) {
 },{}],15:[function(require,module,exports){
 "use strict"
 
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
+function unique_pred(list, compare) {
+  var ptr = 1
+    , len = list.length
+    , a=list[0], b=list[0]
+  for(var i=1; i<len; ++i) {
+    b = a
+    a = list[i]
+    if(compare(a, b)) {
+      if(i === ptr) {
+        ptr++
+        continue
+      }
+      list[ptr++] = a
     }
   }
-  return result
+  list.length = ptr
+  return list
 }
 
-module.exports = invert
+function unique_eq(list) {
+  var ptr = 1
+    , len = list.length
+    , a=list[0], b = list[0]
+  for(var i=1; i<len; ++i, b=a) {
+    b = a
+    a = list[i]
+    if(a !== b) {
+      if(i === ptr) {
+        ptr++
+        continue
+      }
+      list[ptr++] = a
+    }
+  }
+  list.length = ptr
+  return list
+}
+
+function unique(list, compare, sorted) {
+  if(list.length === 0) {
+    return []
+  }
+  if(compare) {
+    if(!sorted) {
+      list.sort(compare)
+    }
+    return unique_pred(list, compare)
+  }
+  if(!sorted) {
+    list.sort()
+  }
+  return unique_eq(list)
+}
+
+module.exports = unique
 },{}],16:[function(require,module,exports){
 "use strict"
 
@@ -1978,6 +2023,20 @@ module.exports = lowerBound
 },{}],17:[function(require,module,exports){
 "use strict"
 
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
+},{}],18:[function(require,module,exports){
+"use strict"
+
 function iota(n) {
   var result = new Array(n)
   for(var i=0; i<n; ++i) {
@@ -1987,63 +2046,5 @@ function iota(n) {
 }
 
 module.exports = iota
-},{}],18:[function(require,module,exports){
-"use strict"
-
-function unique_pred(list, compare) {
-  var ptr = 1
-    , len = list.length
-    , a=list[0], b=list[0]
-  for(var i=1; i<len; ++i) {
-    b = a
-    a = list[i]
-    if(compare(a, b)) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      list[ptr++] = a
-    }
-  }
-  list.length = ptr
-  return list
-}
-
-function unique_eq(list) {
-  var ptr = 1
-    , len = list.length
-    , a=list[0], b = list[0]
-  for(var i=1; i<len; ++i, b=a) {
-    b = a
-    a = list[i]
-    if(a !== b) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      list[ptr++] = a
-    }
-  }
-  list.length = ptr
-  return list
-}
-
-function unique(list, compare, sorted) {
-  if(list.length === 0) {
-    return []
-  }
-  if(compare) {
-    if(!sorted) {
-      list.sort(compare)
-    }
-    return unique_pred(list, compare)
-  }
-  if(!sorted) {
-    list.sort()
-  }
-  return unique_eq(list)
-}
-
-module.exports = unique
 },{}]},{},[5])
 ;

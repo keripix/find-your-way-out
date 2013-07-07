@@ -22,6 +22,61 @@ exports.init = function(conf){
   return new GameConfiguration(conf)
 }
 },{}],2:[function(require,module,exports){
+module.exports = {
+  "world": {
+    "width": 600,
+    "height": 600,
+    "background-color": "black",
+    "box-color": "blue",
+    "actor": "white"
+  },
+  "levels": [
+    {
+      blocks: [
+      {x: 300, y: 290},
+      {x: 50, y: 60},
+      {x: 21, y: 31}
+      ],
+      "start": {
+        x: 300,
+        y: 580,
+        width: 10,
+        height: 10,
+        color: "#ECF0F1"
+      },
+      "out": {
+        x: 590,
+        y: 300,
+        height: 10,
+        width: 10,
+        color: "#27AE60"
+      }
+    },
+    {
+      blocks: [
+      {x: 1, y: 50},
+      {x: 23, y: 500},
+      {x: 301, y: 400},
+      {x: 491, y: 111}
+      ],
+      "start": {
+        x: 300,
+        y: 500,
+        height: 10,
+        width: 10,
+        color: "#ECF0F1"
+      },
+      "out": {
+        x: 590,
+        y: 300,
+        width: 10,
+        height: 10,
+        color: "#27AE60"
+      }
+    }
+  ]
+}
+},{}],3:[function(require,module,exports){
 'use strict';
 
 exports.parsePosition = function(position){
@@ -56,62 +111,16 @@ exports.generate = function(canvas, position){
 
   return canvas;
 };
-},{}],3:[function(require,module,exports){
-module.exports = {
-  "world": {
-    "width": 600,
-    "height": 600,
-    "background-color": "black",
-    "box-color": "blue",
-    "actor": "white"
-  },
-  "levels": [
-    {
-      blocks: [
-      {x: 300, y: 1},
-      {x: 50, y: 60},
-      {x: 21, y: 31}
-      ],
-      "start": {
-        x: 300,
-        y: 580,
-        width: 10,
-        height: 10,
-        color: "#ECF0F1"
-      },
-      "out": {
-        x: 590,
-        y: 300,
-        height: 10,
-        width: 10,
-        color: "#27AE60"
-      }
-    },
-    {
-      blocks: [
-      {x: 1, y: 50},
-      {x: 23, y: 500},
-      {x: 301, y: 400},
-      {x: 491, y: 111}
-      ],
-      "start": {
-        x: 300,
-        y: 500,
-        height: 10,
-        width: 10
-      },
-      "out": {
-        "position": {x: 600, y: 200},
-        "width": "10",
-        "height": "10"
-      }
-    }
-  ]
-}
 },{}],4:[function(require,module,exports){
-module.exports = function(actor, blocks){
+module.exports = function(actor, blocks, exit){
   var check = "x",
       moving = "y";
+
+  if (actor.x >= (exit.x-actor.w) && actor.y >= (exit.y - actor.h)){
+    actor.isMoving = false;
+    actor.hasWon = true;
+    return;
+  }
 
   if (actor.moving.x !== 0) {
     check = "y";
@@ -120,7 +129,6 @@ module.exports = function(actor, blocks){
 
   blocks.forEach(function(b){
     if (b[check] === actor[check]) {
-      console.log(actor[moving], b[moving]+actor.h);
       if (actor[moving] <= (b[moving] + actor.h)) {
         actor.isMoving = false;
         actor.moving.x = 0;
@@ -148,16 +156,18 @@ var gameConfiguration = require("./gameConfiguration"),
 
 var ctx,
     game = gameConfiguration.init(conf),
-    actor = {
+    actor = { // TODO not beautifull
       x: 0,
       y: 0,
       w: 0,
       h: 0,
       moving: {x: 0, y: 0},
-      isMoving: false
+      isMoving: false,
+      hasWon: false
     },
     currentLevel = 1,
-    gameLevel;
+    gameLevel,
+    canvas;
 
 // Bind movement
 shell.bind("move-left", "left", "A");
@@ -166,23 +176,26 @@ shell.bind("move-down", "down", "S");
 shell.bind("move-up", "up", "W");
 
 function startLevel(canvas, gameLevel){
+  console.log("Start level " + currentLevel);
+  ctx.clearRect(0, 0, 600, 600);
+
   worldGenerator.generate(canvas, gameLevel.start);
   worldGenerator.generate(canvas, gameLevel.blocks);
   worldGenerator.generate(canvas, gameLevel.out);
 
-  // todo this sucks
+  // TODO not beautifull
   actor.x = gameLevel.start.x;
   actor.y = gameLevel.start.y;
   actor.w = gameLevel.start.width;
   actor.h = gameLevel.start.height;
   actor.color = gameLevel.start.color;
+  actor.hasWon = false;
 }
 
 // when ready
 shell.on("init", function(){
-  var canvas = document.getElementById('fywo');
-
-  gameLevel = game.getLevel(currentLevel); // todo this sucks
+  canvas = document.getElementById('fywo');
+  gameLevel = game.getLevel(currentLevel); // TODO not beautifull
 
   ctx = canvas.getContext("2d");
   shell.element.appendChild(canvas);
@@ -191,26 +204,33 @@ shell.on("init", function(){
 });
 
 shell.on("tick", function() {
+  if (actor.hasWon) {
+    console.log("wohoo");
+    gameLevel = game.getLevel(++currentLevel);
+    startLevel(canvas, gameLevel);
+    return;
+  }
+
   if (actor.isMoving) {
-    aware(actor, gameLevel.blocks)
+    aware(actor, gameLevel.blocks, gameLevel.out)
     return;
   }
 
   if(shell.wasDown("move-left")) {
-    actor.moving.x = -1;
+    actor.moving.x = -5;
     actor.moving.y = 0;
     actor.isMoving = true;
   } else if(shell.wasDown("move-right")) {
-    actor.moving.x = 1;
+    actor.moving.x = 5;
     actor.moving.y = 0;
     actor.isMoving = true;
   } else if(shell.wasDown("move-up")) {
     actor.moving.x = 0;
-    actor.moving.y = -1;
+    actor.moving.y = -5;
     actor.isMoving = true;
   } else if(shell.wasDown("move-down")) {
     actor.moving.x = 0;
-    actor.moving.y = 1;
+    actor.moving.y = 5;
     actor.isMoving = true;
   }
 });
@@ -231,7 +251,7 @@ shell.on("render", function() {
 
 
 
-},{"./gameConfiguration":1,"./worldGenerator":2,"../conf/game":3,"./aware":4,"game-shell":6}],7:[function(require,module,exports){
+},{"./gameConfiguration":1,"./worldGenerator":3,"../conf/game":2,"./aware":4,"game-shell":6}],7:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -825,6 +845,36 @@ exports.format = function(f) {
 };
 
 },{"events":8}],10:[function(require,module,exports){
+// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+ 
+// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+ 
+// MIT license
+var lastTime = 0;
+var vendors = ['ms', 'moz', 'webkit', 'o'];
+for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+                               || window[vendors[x]+'CancelRequestAnimationFrame'];
+}
+
+if (!window.requestAnimationFrame)
+    window.requestAnimationFrame = function(callback, element) {
+        var currTime = new Date().getTime();
+        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+        var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+          timeToCall);
+        lastTime = currTime + timeToCall;
+        return id;
+    };
+
+if (!window.cancelAnimationFrame)
+    window.cancelAnimationFrame = function(id) {
+        clearTimeout(id);
+    };
+
+},{}],11:[function(require,module,exports){
 //Adapted from here: https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel?redirectlocale=en-US&redirectslug=DOM%2FMozilla_event_reference%2Fwheel
 
 var prefix = "", _addEventListener, onwheel, support;
@@ -884,36 +934,6 @@ module.exports = function( elem, callback, useCapture ) {
     _addWheelListener( elem, "MozMousePixelScroll", callback, useCapture );
   }
 };
-},{}],11:[function(require,module,exports){
-// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
- 
-// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
- 
-// MIT license
-var lastTime = 0;
-var vendors = ['ms', 'moz', 'webkit', 'o'];
-for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
-                               || window[vendors[x]+'CancelRequestAnimationFrame'];
-}
-
-if (!window.requestAnimationFrame)
-    window.requestAnimationFrame = function(callback, element) {
-        var currTime = new Date().getTime();
-        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-        var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
-          timeToCall);
-        lastTime = currTime + timeToCall;
-        return id;
-    };
-
-if (!window.cancelAnimationFrame)
-    window.cancelAnimationFrame = function(id) {
-        clearTimeout(id);
-    };
-
 },{}],12:[function(require,module,exports){
 if(window.performance.now) {
   module.exports = function() { return window.performance.now() }
@@ -1640,7 +1660,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":8,"util":9,"./lib/mousewheel-polyfill.js":10,"./lib/raf-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"domready":13,"vkey":14,"invert-hash":15,"uniq":16,"lower-bound":17,"iota-array":18}],13:[function(require,module,exports){
+},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"domready":13,"invert-hash":14,"uniq":15,"lower-bound":16,"vkey":17,"iota-array":18}],13:[function(require,module,exports){
 /*!
   * domready (c) Dustin Diaz 2012 - License MIT
   */
@@ -1696,6 +1716,134 @@ module.exports = createShell
     })
 })
 },{}],14:[function(require,module,exports){
+"use strict"
+
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
+},{}],15:[function(require,module,exports){
+"use strict"
+
+function unique_pred(list, compare) {
+  var ptr = 1
+    , len = list.length
+    , a=list[0], b=list[0]
+  for(var i=1; i<len; ++i) {
+    b = a
+    a = list[i]
+    if(compare(a, b)) {
+      if(i === ptr) {
+        ptr++
+        continue
+      }
+      list[ptr++] = a
+    }
+  }
+  list.length = ptr
+  return list
+}
+
+function unique_eq(list) {
+  var ptr = 1
+    , len = list.length
+    , a=list[0], b = list[0]
+  for(var i=1; i<len; ++i, b=a) {
+    b = a
+    a = list[i]
+    if(a !== b) {
+      if(i === ptr) {
+        ptr++
+        continue
+      }
+      list[ptr++] = a
+    }
+  }
+  list.length = ptr
+  return list
+}
+
+function unique(list, compare, sorted) {
+  if(list.length === 0) {
+    return []
+  }
+  if(compare) {
+    if(!sorted) {
+      list.sort(compare)
+    }
+    return unique_pred(list, compare)
+  }
+  if(!sorted) {
+    list.sort()
+  }
+  return unique_eq(list)
+}
+
+module.exports = unique
+},{}],16:[function(require,module,exports){
+"use strict"
+
+function lowerBound_cmp(array, value, compare, lo, hi) {
+  lo = lo|0
+  hi = hi|0
+  while(lo < hi) {
+    var m = (lo + hi) >>> 1
+      , v = compare(value, array[m])
+    if(v < 0) {
+      hi = m-1
+    } else if(v > 0) {
+      lo = m+1
+    } else {
+      hi = m
+    }
+  }
+  if(compare(array[lo], value) <= 0) {
+    return lo
+  }
+  return lo - 1
+}
+
+function lowerBound_def(array, value, lo, hi) {
+  lo = lo|0
+  hi = hi|0
+  while(lo < hi) {
+    var m = (lo + hi) >>> 1
+    if(value < array[m]) {
+      hi = m-1
+    } else if(value > array[m]) {
+      lo = m+1
+    } else {
+      hi = m
+    }
+  }
+  if(array[lo] <= value) {
+    return lo
+  }
+  return lo - 1
+}
+
+function lowerBound(array, value, compare, lo, hi) {
+  if(!lo) {
+    lo = 0
+  }
+  if(typeof(hi) !== "number") {
+    hi = array.length-1
+  }
+  if(compare) {
+    return lowerBound_cmp(array, value, compare, lo, hi)
+  }
+  return lowerBound_def(array, value, lo, hi)
+}
+
+module.exports = lowerBound
+},{}],17:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -1834,134 +1982,6 @@ for(i = 112; i < 136; ++i) {
 }
 
 })()
-},{}],15:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
-},{}],16:[function(require,module,exports){
-"use strict"
-
-function unique_pred(list, compare) {
-  var ptr = 1
-    , len = list.length
-    , a=list[0], b=list[0]
-  for(var i=1; i<len; ++i) {
-    b = a
-    a = list[i]
-    if(compare(a, b)) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      list[ptr++] = a
-    }
-  }
-  list.length = ptr
-  return list
-}
-
-function unique_eq(list) {
-  var ptr = 1
-    , len = list.length
-    , a=list[0], b = list[0]
-  for(var i=1; i<len; ++i, b=a) {
-    b = a
-    a = list[i]
-    if(a !== b) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      list[ptr++] = a
-    }
-  }
-  list.length = ptr
-  return list
-}
-
-function unique(list, compare, sorted) {
-  if(list.length === 0) {
-    return []
-  }
-  if(compare) {
-    if(!sorted) {
-      list.sort(compare)
-    }
-    return unique_pred(list, compare)
-  }
-  if(!sorted) {
-    list.sort()
-  }
-  return unique_eq(list)
-}
-
-module.exports = unique
-},{}],17:[function(require,module,exports){
-"use strict"
-
-function lowerBound_cmp(array, value, compare, lo, hi) {
-  lo = lo|0
-  hi = hi|0
-  while(lo < hi) {
-    var m = (lo + hi) >>> 1
-      , v = compare(value, array[m])
-    if(v < 0) {
-      hi = m-1
-    } else if(v > 0) {
-      lo = m+1
-    } else {
-      hi = m
-    }
-  }
-  if(compare(array[lo], value) <= 0) {
-    return lo
-  }
-  return lo - 1
-}
-
-function lowerBound_def(array, value, lo, hi) {
-  lo = lo|0
-  hi = hi|0
-  while(lo < hi) {
-    var m = (lo + hi) >>> 1
-    if(value < array[m]) {
-      hi = m-1
-    } else if(value > array[m]) {
-      lo = m+1
-    } else {
-      hi = m
-    }
-  }
-  if(array[lo] <= value) {
-    return lo
-  }
-  return lo - 1
-}
-
-function lowerBound(array, value, compare, lo, hi) {
-  if(!lo) {
-    lo = 0
-  }
-  if(typeof(hi) !== "number") {
-    hi = array.length-1
-  }
-  if(compare) {
-    return lowerBound_cmp(array, value, compare, lo, hi)
-  }
-  return lowerBound_def(array, value, lo, hi)
-}
-
-module.exports = lowerBound
 },{}],18:[function(require,module,exports){
 "use strict"
 

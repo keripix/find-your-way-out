@@ -9,7 +9,7 @@ module.exports = {
   "levels": [
     {
       blocks: [
-      {x: 300, y: 1},
+      {x: 300, y: 290},
       {x: 50, y: 60},
       {x: 21, y: 31}
       ],
@@ -39,12 +39,15 @@ module.exports = {
         x: 300,
         y: 500,
         height: 10,
-        width: 10
+        width: 10,
+        color: "#ECF0F1"
       },
       "out": {
-        "position": {x: 600, y: 200},
-        "width": "10",
-        "height": "10"
+        x: 590,
+        y: 300,
+        width: 10,
+        height: 10,
+        color: "#27AE60"
       }
     }
   ]

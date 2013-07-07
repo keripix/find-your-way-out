@@ -15,7 +15,10 @@ module.exports = {
       ],
       "start": {
         x: 300,
-        y: 580
+        y: 580,
+        width: 10,
+        height: 10,
+        color: "#ECF0F1"
       },
       "out": {
         "position": {x: 600, y: 200},
@@ -32,7 +35,9 @@ module.exports = {
       ],
       "start": {
         x: 300,
-        y: 500
+        y: 500,
+        height: 10,
+        width: 10
       },
       "out": {
         "position": {x: 600, y: 200},

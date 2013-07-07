@@ -1,6 +1,41 @@
 ;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
 'use strict';
 
+exports.parsePosition = function(position){
+  var results = [];
+
+  // if this is not an array, then make it an array
+  if (toString.call(position) != '[object Array]'){
+    position = [position];
+  }
+
+  position.forEach(function(pos){
+    results.push({
+      x: pos.x || 0,
+      y: pos.y || 0,
+      width: pos.width || 10,
+      height: pos.height || 10,
+      color: pos.color || "#000000"
+    });
+  });
+
+  return results;
+};
+
+exports.generate = function(canvas, position){
+  var points = this.parsePosition(position),
+      ctx = canvas.getContext('2d');
+
+  points.forEach(function(p){
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x, p.y, p.width, p.height);
+  });
+
+  return canvas;
+};
+},{}],2:[function(require,module,exports){
+'use strict';
+
 function GameConfiguration(conf){
   this.parseConf(conf);
 }
@@ -21,7 +56,7 @@ GameConfiguration.prototype.getLevel = function(level) {
 exports.init = function(conf){
   return new GameConfiguration(conf)
 }
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 module.exports = {
   "world": {
     "width": 600,
@@ -39,7 +74,10 @@ module.exports = {
       ],
       "start": {
         x: 300,
-        y: 580
+        y: 580,
+        width: 10,
+        height: 10,
+        color: "#ECF0F1"
       },
       "out": {
         "position": {x: 600, y: 200},
@@ -56,7 +94,9 @@ module.exports = {
       ],
       "start": {
         x: 300,
-        y: 500
+        y: 500,
+        height: 10,
+        width: 10
       },
       "out": {
         "position": {x: 600, y: 200},
@@ -66,41 +106,6 @@ module.exports = {
     }
   ]
 }
-},{}],3:[function(require,module,exports){
-'use strict';
-
-exports.parsePosition = function(position){
-  var results = [];
-
-  // if this is not an array, then make it an array
-  if (toString.call(position) != '[object Array]'){
-    position = [position];
-  }
-
-  position.forEach(function(pos){
-    results.push({
-      x: pos.x || 0,
-      y: pos.y || 0,
-      width: pos.width || 5,
-      height: pos.height || 5,
-      color: pos.color || "#000000"
-    });
-  });
-
-  return results;
-};
-
-exports.generate = function(canvas, position){
-  var points = this.parsePosition(position),
-      ctx = canvas.getContext('2d');
-
-  points.forEach(function(p){
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x, p.y, p.width, p.height);
-  });
-
-  return canvas;
-};
 },{}],4:[function(require,module,exports){
 /*
  * find-your-way-out
@@ -118,7 +123,15 @@ var gameConfiguration = require("./gameConfiguration"),
     shell = require("game-shell")();
 
 var ctx,
-    game;
+    game = gameConfiguration.init(conf),
+    actor = {
+      x: 0,
+      y: 0,
+      w: 0,
+      h: 0,
+      moving: {x: 0, y: 0},
+      isMoving: false
+    };
 
 // Bind movement
 shell.bind("move-left", "left", "A");
@@ -126,26 +139,73 @@ shell.bind("move-right", "right", "D");
 shell.bind("move-down", "down", "S");
 shell.bind("move-up", "up", "W");
 
-function startWorld(canvas){
-  game = gameConfiguration.init(conf);
-  worldGenerator.generate(canvas, game.getLevel(1).blocks);
-}
-
 // when ready
 shell.on("init", function(){
-  var bottomCanvas = document.getElementById('fywo-background'),
-      topCanvas = document.getElementById("fywo-foreground");
+  var canvas = document.getElementById('fywo'),
+      gameLevel = game.getLevel(1);
 
-  shell.element.appendChild(topCanvas);
-  shell.element.appendChild(bottomCanvas);
+  ctx = canvas.getContext("2d");
 
-  startWorld(bottomCanvas);
+  shell.element.appendChild(canvas);
+
+  worldGenerator.generate(canvas, gameLevel.start);
+  worldGenerator.generate(canvas, gameLevel.blocks);
+
+  actor.x = gameLevel.start.x;
+  actor.y = gameLevel.start.y;
+  actor.w = gameLevel.start.width;
+  actor.h = gameLevel.start.height;
+  actor.color = gameLevel.start.color;
 });
 
+shell.on("tick", function() {
+  if (actor.isMoving) {
+    return;
+  }
+  console.log("tick");
+  if(shell.wasDown("move-left")) {
+    console.log("left");
+    actor.moving.x = -1;
+    actor.moving.y = 0;
+    actor.isMoving = true;
+  }
+  if(shell.wasDown("move-right")) {
+    console.log("right");
+    actor.moving.x = 1;
+    actor.moving.y = 0;
+    actor.isMoving = true;
+  }
+  if(shell.wasDown("move-up")) {
+    console.log("up");
+    actor.moving.x = 0;
+    actor.moving.y = -1;
+    actor.isMoving = true;
+  }
+  if(shell.wasDown("move-down")) {
+    console.log("down");
+    actor.moving.x = 0;
+    actor.moving.y = 1;
+    actor.isMoving = true;
+  }
+});
+
+//Render a frame
+shell.on("render", function() {
+  if (actor.isMoving){
+    ctx.clearRect(actor.x, actor.y, actor.w, actor.h);
+
+    ctx.fillStyle = actor.color;
+    actor.x += actor.moving.x;
+    actor.y += actor.moving.y;
+
+    ctx.fillRect(actor.x, actor.y, actor.w, actor.h);
+  }
+})
 
 
 
-},{"./gameConfiguration":1,"./worldGenerator":3,"../conf/game":2,"game-shell":5}],6:[function(require,module,exports){
+
+},{"./gameConfiguration":2,"./worldGenerator":1,"../conf/game":3,"game-shell":5}],6:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1554,7 +1614,76 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":7,"util":8,"./lib/raf-polyfill.js":9,"./lib/mousewheel-polyfill.js":10,"./lib/hrtime-polyfill.js":11,"domready":12,"vkey":13,"invert-hash":14,"uniq":15,"lower-bound":16,"iota-array":17}],13:[function(require,module,exports){
+},{"events":7,"util":8,"./lib/raf-polyfill.js":9,"./lib/mousewheel-polyfill.js":10,"./lib/hrtime-polyfill.js":11,"domready":12,"vkey":13,"invert-hash":14,"uniq":15,"lower-bound":16,"iota-array":17}],12:[function(require,module,exports){
+/*!
+  * domready (c) Dustin Diaz 2012 - License MIT
+  */
+!function (name, definition) {
+  if (typeof module != 'undefined') module.exports = definition()
+  else if (typeof define == 'function' && typeof define.amd == 'object') define(definition)
+  else this[name] = definition()
+}('domready', function (ready) {
+
+  var fns = [], fn, f = false
+    , doc = document
+    , testEl = doc.documentElement
+    , hack = testEl.doScroll
+    , domContentLoaded = 'DOMContentLoaded'
+    , addEventListener = 'addEventListener'
+    , onreadystatechange = 'onreadystatechange'
+    , readyState = 'readyState'
+    , loaded = /^loade|c/.test(doc[readyState])
+
+  function flush(f) {
+    loaded = 1
+    while (f = fns.shift()) f()
+  }
+
+  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
+    doc.removeEventListener(domContentLoaded, fn, f)
+    flush()
+  }, f)
+
+
+  hack && doc.attachEvent(onreadystatechange, fn = function () {
+    if (/^c/.test(doc[readyState])) {
+      doc.detachEvent(onreadystatechange, fn)
+      flush()
+    }
+  })
+
+  return (ready = hack ?
+    function (fn) {
+      self != top ?
+        loaded ? fn() : fns.push(fn) :
+        function () {
+          try {
+            testEl.doScroll('left')
+          } catch (e) {
+            return setTimeout(function() { ready(fn) }, 50)
+          }
+          fn()
+        }()
+    } :
+    function (fn) {
+      loaded ? fn() : fns.push(fn)
+    })
+})
+},{}],14:[function(require,module,exports){
+"use strict"
+
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
+},{}],13:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -1693,75 +1822,6 @@ for(i = 112; i < 136; ++i) {
 }
 
 })()
-},{}],12:[function(require,module,exports){
-/*!
-  * domready (c) Dustin Diaz 2012 - License MIT
-  */
-!function (name, definition) {
-  if (typeof module != 'undefined') module.exports = definition()
-  else if (typeof define == 'function' && typeof define.amd == 'object') define(definition)
-  else this[name] = definition()
-}('domready', function (ready) {
-
-  var fns = [], fn, f = false
-    , doc = document
-    , testEl = doc.documentElement
-    , hack = testEl.doScroll
-    , domContentLoaded = 'DOMContentLoaded'
-    , addEventListener = 'addEventListener'
-    , onreadystatechange = 'onreadystatechange'
-    , readyState = 'readyState'
-    , loaded = /^loade|c/.test(doc[readyState])
-
-  function flush(f) {
-    loaded = 1
-    while (f = fns.shift()) f()
-  }
-
-  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
-    doc.removeEventListener(domContentLoaded, fn, f)
-    flush()
-  }, f)
-
-
-  hack && doc.attachEvent(onreadystatechange, fn = function () {
-    if (/^c/.test(doc[readyState])) {
-      doc.detachEvent(onreadystatechange, fn)
-      flush()
-    }
-  })
-
-  return (ready = hack ?
-    function (fn) {
-      self != top ?
-        loaded ? fn() : fns.push(fn) :
-        function () {
-          try {
-            testEl.doScroll('left')
-          } catch (e) {
-            return setTimeout(function() { ready(fn) }, 50)
-          }
-          fn()
-        }()
-    } :
-    function (fn) {
-      loaded ? fn() : fns.push(fn)
-    })
-})
-},{}],14:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
 },{}],15:[function(require,module,exports){
 "use strict"
 

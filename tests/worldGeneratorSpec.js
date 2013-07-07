@@ -9,8 +9,8 @@ describe("Generating World", function(){
 
       expect(positions[0].x).toEqual(59);
       expect(positions[0].y).toEqual(21);
-      expect(positions[0].width).toEqual(5);
-      expect(positions[0].height).toEqual(5);
+      expect(positions[0].width).toEqual(10);
+      expect(positions[0].height).toEqual(10);
     });
 
     it("Should parse positions correctly when passed an array", function(){
@@ -22,10 +22,10 @@ describe("Generating World", function(){
           pos2 = positions[1];
 
       expect(pos1.x).toEqual(5);
-      expect(pos1.width).toEqual(5);
+      expect(pos1.width).toEqual(10);
 
       expect(pos2.x).toEqual(6);
-      expect(pos2.width).toEqual(5);
+      expect(pos2.width).toEqual(10);
     });
   });
 

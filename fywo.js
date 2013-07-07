@@ -1,41 +1,6 @@
 ;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
 'use strict';
 
-exports.parsePosition = function(position){
-  var results = [];
-
-  // if this is not an array, then make it an array
-  if (toString.call(position) != '[object Array]'){
-    position = [position];
-  }
-
-  position.forEach(function(pos){
-    results.push({
-      x: pos.x || 0,
-      y: pos.y || 0,
-      width: pos.width || 5,
-      height: pos.height || 5,
-      color: pos.color || "#000000"
-    });
-  });
-
-  return results;
-};
-
-exports.generate = function(canvas, position){
-  var points = this.parsePosition(position),
-      ctx = canvas.getContext('2d');
-
-  points.forEach(function(p){
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x, p.y, p.width, p.height);
-  });
-
-  return canvas;
-};
-},{}],2:[function(require,module,exports){
-'use strict';
-
 function GameConfiguration(conf){
   this.parseConf(conf);
 }
@@ -56,7 +21,7 @@ GameConfiguration.prototype.getLevel = function(level) {
 exports.init = function(conf){
   return new GameConfiguration(conf)
 }
-},{}],3:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 module.exports = {
   "world": {
     "width": 600,
@@ -101,6 +66,41 @@ module.exports = {
     }
   ]
 }
+},{}],3:[function(require,module,exports){
+'use strict';
+
+exports.parsePosition = function(position){
+  var results = [];
+
+  // if this is not an array, then make it an array
+  if (toString.call(position) != '[object Array]'){
+    position = [position];
+  }
+
+  position.forEach(function(pos){
+    results.push({
+      x: pos.x || 0,
+      y: pos.y || 0,
+      width: pos.width || 5,
+      height: pos.height || 5,
+      color: pos.color || "#000000"
+    });
+  });
+
+  return results;
+};
+
+exports.generate = function(canvas, position){
+  var points = this.parsePosition(position),
+      ctx = canvas.getContext('2d');
+
+  points.forEach(function(p){
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x, p.y, p.width, p.height);
+  });
+
+  return canvas;
+};
 },{}],4:[function(require,module,exports){
 /*
  * find-your-way-out
@@ -133,21 +133,19 @@ function startWorld(canvas){
 
 // when ready
 shell.on("init", function(){
-  var canvas = document.getElementById('fywo');
+  var bottomCanvas = document.getElementById('fywo-background'),
+      topCanvas = document.getElementById("fywo-foreground");
 
-  canvas.width = 600;
-  canvas.height = 600;
+  shell.element.appendChild(topCanvas);
+  shell.element.appendChild(bottomCanvas);
 
-  shell.element.appendChild(canvas);
-  ctx = canvas.getContext("2d");
-
-  startWorld(canvas);
+  startWorld(bottomCanvas);
 });
 
 
 
 
-},{"./gameConfiguration":2,"./worldGenerator":1,"../conf/game":3,"game-shell":5}],6:[function(require,module,exports){
+},{"./gameConfiguration":1,"./worldGenerator":3,"../conf/game":2,"game-shell":5}],6:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};

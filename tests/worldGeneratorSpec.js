@@ -45,12 +45,18 @@ describe("Generating World", function(){
       // check wether the boxes has been drawn
       var context = drawn.getContext('2d'),
           data1 = context.getImageData(50, 50, 5, 5).data, // the first box
-          data2 = context.getImageData(121, 31, 10, 21).data; // the second box
+          data2 = context.getImageData(121, 31, 10, 20).data; // the second box
 
       for (var i = 0, n = data1.length; i < n; i += 4){
         expect(data1[i]).toEqual(212);
         expect(data1[i+1]).toEqual(213);
         expect(data1[i+2]).toEqual(214);
+      }
+
+      for (i = 0, n = data2.length; i < n; i += 4){
+        expect(data2[i]).toEqual(100);
+        expect(data2[i+1]).toEqual(101);
+        expect(data2[i+2]).toEqual(102);
       }
     });
   });

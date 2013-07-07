@@ -25,7 +25,7 @@
     "node": ">= 0.8.0"
   },
   "scripts": {
-    "build": "browserify lib/find-your-way-out.js -o fywo.js && uglify fywo.js -m -o fywo.min.js"
+    "build": "browserify lib/find-your-way-out.js -o fywo.js && uglifyjs fywo.js -m -o fywo.min.js"
   },
   "keywords": [],
   "dependencies": {

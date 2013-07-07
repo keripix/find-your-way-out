@@ -18,7 +18,7 @@ describe("Game Configuration", function(){
     //
 
     describe("Setting global configuration for each level's setting", function(){
-      it("Should apply global settings if none provided", function(){
+      it("Should apply global settings to actor if none provided", function(){
         var gameConf = gameConfig.init(conf);
 
         expect(gameConf.getLevel(1).actor.width).toEqual(10);
@@ -26,6 +26,19 @@ describe("Game Configuration", function(){
 
         expect(gameConf.getLevel(2).out.width).toEqual(10);
         expect(gameConf.getLevel(2).out.color).toEqual("#27AE60");
+      });
+
+      it("Should apply global settings to blocks if none provided", function(){
+        var gameConf = gameConfig.init(conf),
+            blocks = gameConf.getLevel(1).blocks;
+
+        expect(blocks[0].width).toEqual(10);
+        expect(blocks[0].height).toEqual(10);
+        expect(blocks[0].color).toEqual("#000000");
+
+        expect(blocks[2].width).toEqual(10);
+        expect(blocks[2].height).toEqual(10);
+        expect(blocks[2].color).toEqual("#000000");
       });
     });
 

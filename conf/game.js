@@ -11,9 +11,14 @@ module.exports = {
       width: 10,
       height: 10,
       color: "#27AE60"
+    },
+    blocks: {
+      width: 10,
+      height: 10,
+      color: "#000000"
     }
   },
-  "levels": [
+  levels: [
     {
       blocks: [
       {x: 300, y: 290},

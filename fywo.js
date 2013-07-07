@@ -23,6 +23,12 @@ GameConfiguration.prototype.parseConf = function(conf) {
     l.out.width = l.out.width || conf.world.out.width;
     l.out.height = l.out.height || conf.world.out.height;
     l.out.color = l.out.color || conf.world.out.color;
+
+    l.blocks.forEach(function(b){
+      b.width = b.width || conf.world.blocks.width;
+      b.height = b.height || conf.world.blocks.height;
+      b.color = b.color || conf.world.blocks.color;
+    });
   });
 };
 
@@ -83,9 +89,14 @@ module.exports = {
       width: 10,
       height: 10,
       color: "#27AE60"
+    },
+    blocks: {
+      width: 10,
+      height: 10,
+      color: "#000000"
     }
   },
-  "levels": [
+  levels: [
     {
       blocks: [
       {x: 300, y: 290},
@@ -152,7 +163,7 @@ module.exports = function(actor, blocks, exit){
           midBlock = {x: b.x + (b.width/2), y: b.y + (b.height/2)},
           distance = Math.sqrt(Math.pow(midActor.x-midBlock.x,2)+Math.pow(midActor.y-midBlock.y,2));
           collisionDistance = (actor[collisionAxis] + b[collisionAxis])/2;
-      console.log(distance, collisionDistance);
+
       if (distance <= collisionDistance) {
         actor.isMoving = false;
         actor.moving.x = 0;
@@ -916,6 +927,16 @@ if (!window.cancelAnimationFrame)
     };
 
 },{}],11:[function(require,module,exports){
+if(window.performance.now) {
+  module.exports = function() { return window.performance.now() }
+} else if(window.performance.webktiNow) {
+  module.exports = function() { return window.performance.webkitNow() }
+} else if(Date.now) {
+  module.exports = Date.now
+} else {
+  module.exports = function() { return (new Date()).getTime() }
+}
+},{}],12:[function(require,module,exports){
 //Adapted from here: https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel?redirectlocale=en-US&redirectslug=DOM%2FMozilla_event_reference%2Fwheel
 
 var prefix = "", _addEventListener, onwheel, support;
@@ -975,16 +996,6 @@ module.exports = function( elem, callback, useCapture ) {
     _addWheelListener( elem, "MozMousePixelScroll", callback, useCapture );
   }
 };
-},{}],12:[function(require,module,exports){
-if(window.performance.now) {
-  module.exports = function() { return window.performance.now() }
-} else if(window.performance.webktiNow) {
-  module.exports = function() { return window.performance.webkitNow() }
-} else if(Date.now) {
-  module.exports = Date.now
-} else {
-  module.exports = function() { return (new Date()).getTime() }
-}
 },{}],6:[function(require,module,exports){
 "use strict"
 
@@ -1701,7 +1712,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"domready":13,"invert-hash":14,"vkey":15,"uniq":16,"lower-bound":17,"iota-array":18}],13:[function(require,module,exports){
+},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/hrtime-polyfill.js":11,"./lib/mousewheel-polyfill.js":12,"domready":13,"vkey":14,"invert-hash":15,"uniq":16,"lower-bound":17,"iota-array":18}],13:[function(require,module,exports){
 /*!
   * domready (c) Dustin Diaz 2012 - License MIT
   */
@@ -1757,20 +1768,6 @@ module.exports = createShell
     })
 })
 },{}],14:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
-},{}],15:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -1909,6 +1906,20 @@ for(i = 112; i < 136; ++i) {
 }
 
 })()
+},{}],15:[function(require,module,exports){
+"use strict"
+
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
 },{}],16:[function(require,module,exports){
 "use strict"
 

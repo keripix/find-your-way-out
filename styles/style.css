@@ -1,6 +1,15 @@
-#fywo {
-  background-color: #E67E22;
+#fywo, #background {
   position: absolute;
   top: 20px;
   left: 60px;
+}
+
+#fywo {
+  z-index: 1;
+  background-color: transparent;
+}
+
+#background{
+  z-index: 0;
+  background-color: #E67E22;
 }

@@ -203,6 +203,8 @@ var ctx,
     currentLevel = 1,
     gameLevel,
     canvas,
+    canvasBackground,
+    bkgCtx,
     speed = 5;
 
 // Bind movement
@@ -211,8 +213,9 @@ shell.bind("move-right", "right", "D");
 shell.bind("move-down", "down", "S");
 shell.bind("move-up", "up", "W");
 
-function startLevel(canvas, gameLevel){
+function startLevel(){
   ctx.clearRect(0, 0, 600, 600);
+  bkgCtx.clearRect(0, 0, 600, 600);
 
   if (!gameLevel) {
     return;
@@ -236,30 +239,35 @@ function startLevel(canvas, gameLevel){
   actor.hasLost = false;
 
   worldGenerator.generate(canvas, gameLevel.actor);
-  worldGenerator.generate(canvas, gameLevel.blocks);
-  worldGenerator.generate(canvas, gameLevel.out);
+  worldGenerator.generate(canvasBackground, gameLevel.blocks);
+  worldGenerator.generate(canvasBackground, gameLevel.out);
 }
 
 // when ready
 shell.on("init", function(){
-  canvas = document.getElementById('fywo');
+  canvas = document.getElementById("fywo");
+  canvasBackground = document.getElementById("background");
+
   gameLevel = game.getLevel(currentLevel); // TODO not beautifull
 
   ctx = canvas.getContext("2d");
-  shell.element.appendChild(canvas);
+  bkgCtx = canvasBackground.getContext("2d");
 
-  startLevel(canvas, gameLevel);
+  shell.element.appendChild(canvas);
+  shell.element.appendChild(canvasBackground);
+
+  startLevel();
 });
 
 shell.on("tick", function() {
   if (actor.hasWon) {
     gameLevel = game.getLevel(++currentLevel);
-    startLevel(canvas, gameLevel);
+    startLevel();
     return;
   }
 
   if (actor.hasLost){
-    startLevel(canvas, gameLevel);
+    startLevel();
     return;
   }
 
@@ -1712,7 +1720,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"domready":13,"vkey":14,"uniq":15,"lower-bound":16,"invert-hash":17,"iota-array":18}],13:[function(require,module,exports){
+},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"domready":13,"vkey":14,"invert-hash":15,"uniq":16,"lower-bound":17,"iota-array":18}],13:[function(require,module,exports){
 /*!
   * domready (c) Dustin Diaz 2012 - License MIT
   */
@@ -1909,6 +1917,20 @@ for(i = 112; i < 136; ++i) {
 },{}],15:[function(require,module,exports){
 "use strict"
 
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
+},{}],16:[function(require,module,exports){
+"use strict"
+
 function unique_pred(list, compare) {
   var ptr = 1
     , len = list.length
@@ -1964,7 +1986,7 @@ function unique(list, compare, sorted) {
 }
 
 module.exports = unique
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict"
 
 function lowerBound_cmp(array, value, compare, lo, hi) {
@@ -2020,20 +2042,6 @@ function lowerBound(array, value, compare, lo, hi) {
 }
 
 module.exports = lowerBound
-},{}],17:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
 },{}],18:[function(require,module,exports){
 "use strict"
 

@@ -98,10 +98,7 @@ module.exports = {
       },
       out: {
         x: 590,
-        y: 300,
-        height: 10,
-        width: 10,
-        color: "#27AE60"
+        y: 300
       }
     },
     {
@@ -113,10 +110,7 @@ module.exports = {
       ],
       actor: {
         x: 300,
-        y: 500,
-        height: 10,
-        width: 10,
-        color: "#ECF0F1"
+        y: 500
       },
       out: {
         x: 590,
@@ -129,9 +123,10 @@ module.exports = {
 module.exports = function(actor, blocks, exit){
   var check = "x",
       moving = "y",
-      bound = actor.h;
+      bound = actor.height,
+      collisionAxis = "height";
 
-  if (actor.x >= (exit.x - actor.w) && actor.y >= (exit.y - actor.h)){
+  if (actor.x >= (exit.x - actor.width) && actor.y >= (exit.y - actor.height)){
     actor.isMoving = false;
     actor.hasWon = true;
     return;
@@ -146,12 +141,19 @@ module.exports = function(actor, blocks, exit){
   if (actor.moving.x !== 0) {
     check = "y";
     moving = "x";
-    bound = actor.w;
+    bound = actor.width;
+    collisionAxis = "width";
   }
 
   blocks.forEach(function(b){
-    if (b[check] === actor[check]) {
-      if (actor[moving] <= (b[moving] + bound)) {
+    if (b[check] <= (actor[check] + bound) && b[check] >= (actor[check] - bound)) {
+
+      var midActor = {x: actor.x + (actor.width/2), y: actor.y + (actor.height/2)},
+          midBlock = {x: b.x + (b.width/2), y: b.y + (b.height/2)},
+          distance = Math.sqrt(Math.pow(midActor.x-midBlock.x,2)+Math.pow(midActor.y-midBlock.y,2));
+          collisionDistance = (actor[collisionAxis] + b[collisionAxis])/2;
+      console.log(distance, collisionDistance);
+      if (distance <= collisionDistance) {
         actor.isMoving = false;
         actor.moving.x = 0;
         actor.moving.y = 0;
@@ -181,8 +183,8 @@ var ctx,
     actor = { // TODO not beautifull
       x: 0,
       y: 0,
-      w: 0,
-      h: 0,
+      width: 0,
+      height: 0,
       moving: {x: 0, y: 0},
       isMoving: false,
       hasWon: false,
@@ -213,16 +215,16 @@ function startLevel(canvas, gameLevel){
   }
 
   // TODO not beautifull
-  actor.x = gameLevel.start.x;
-  actor.y = gameLevel.start.y;
-  actor.w = gameLevel.start.width;
-  actor.h = gameLevel.start.height;
-  actor.color = gameLevel.start.color;
+  actor.x = gameLevel.actor.x;
+  actor.y = gameLevel.actor.y;
+  actor.width = gameLevel.actor.width;
+  actor.height = gameLevel.actor.height;
+  actor.color = gameLevel.actor.color;
   actor.hasWon = false;
   actor.isMoving = false;
   actor.hasLost = false;
 
-  worldGenerator.generate(canvas, gameLevel.start);
+  worldGenerator.generate(canvas, gameLevel.actor);
   worldGenerator.generate(canvas, gameLevel.blocks);
   worldGenerator.generate(canvas, gameLevel.out);
 }
@@ -277,13 +279,13 @@ shell.on("tick", function() {
 //Render a frame
 shell.on("render", function() {
   if (actor.isMoving){
-    ctx.clearRect(actor.x, actor.y, actor.w, actor.h);
+    ctx.clearRect(actor.x, actor.y, actor.width, actor.height);
 
     ctx.fillStyle = actor.color;
     actor.x += actor.moving.x;
     actor.y += actor.moving.y;
 
-    ctx.fillRect(actor.x, actor.y, actor.w, actor.h);
+    ctx.fillRect(actor.x, actor.y, actor.width, actor.height);
   }
 })
 
@@ -1699,7 +1701,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"domready":13,"vkey":14,"invert-hash":15,"uniq":16,"lower-bound":17,"iota-array":18}],13:[function(require,module,exports){
+},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"domready":13,"invert-hash":14,"vkey":15,"uniq":16,"lower-bound":17,"iota-array":18}],13:[function(require,module,exports){
 /*!
   * domready (c) Dustin Diaz 2012 - License MIT
   */
@@ -1754,7 +1756,7 @@ module.exports = createShell
       loaded ? fn() : fns.push(fn)
     })
 })
-},{}],15:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 "use strict"
 
 function invert(hash) {
@@ -1768,7 +1770,7 @@ function invert(hash) {
 }
 
 module.exports = invert
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -1965,18 +1967,6 @@ function unique(list, compare, sorted) {
 }
 
 module.exports = unique
-},{}],18:[function(require,module,exports){
-"use strict"
-
-function iota(n) {
-  var result = new Array(n)
-  for(var i=0; i<n; ++i) {
-    result[i] = i
-  }
-  return result
-}
-
-module.exports = iota
 },{}],17:[function(require,module,exports){
 "use strict"
 
@@ -2033,5 +2023,17 @@ function lowerBound(array, value, compare, lo, hi) {
 }
 
 module.exports = lowerBound
+},{}],18:[function(require,module,exports){
+"use strict"
+
+function iota(n) {
+  var result = new Array(n)
+  for(var i=0; i<n; ++i) {
+    result[i] = i
+  }
+  return result
+}
+
+module.exports = iota
 },{}]},{},[5])
 ;

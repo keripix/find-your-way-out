@@ -26,10 +26,7 @@ module.exports = {
       },
       out: {
         x: 590,
-        y: 300,
-        height: 10,
-        width: 10,
-        color: "#27AE60"
+        y: 300
       }
     },
     {
@@ -41,10 +38,7 @@ module.exports = {
       ],
       actor: {
         x: 300,
-        y: 500,
-        height: 10,
-        width: 10,
-        color: "#ECF0F1"
+        y: 500
       },
       out: {
         x: 590,

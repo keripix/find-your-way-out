@@ -12,11 +12,9 @@ describe("Game Configuration", function(){
       expect(gameConf.levels.length).toEqual(2);
     });
 
-    it("Should throw Error if bad conf is passed", function(){
-      // (function(){
-      //   gameConfig.init({bla:1,bli:2});
-      // }).should.throw();
-    });
+    // it("Should throw Error if bad conf is passed", function(){
+    //   expect(gameConfig.init({bla:1,bli:2})).toThrow();
+    // });
 
     it("Should parsed the level correctly", function(){
       var gameConf = gameConfig.init(conf);

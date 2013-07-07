@@ -21,7 +21,10 @@ describe("Generating World", function(){
           pos2 = positions[1];
 
       expect(pos1.x).toEqual(5);
+      expect(pos1.width).toEqual(5);
+
       expect(pos2.x).toEqual(6);
+      expect(pos2.width).toEqual(5);
     });
   });
 });

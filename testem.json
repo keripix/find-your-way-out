@@ -2,7 +2,8 @@
     "framework": "mocha",
     "src_files": [
         "lib/**/*.js",
-        "tests/**/*Spec.js"
+        "tests/**/*Spec.js",
+        "conf/**/*.js"
     ],
     "launch_in_dev": ["node"],
     "launchers": {

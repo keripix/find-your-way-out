@@ -21,9 +21,11 @@ module.exports = {
         color: "#ECF0F1"
       },
       "out": {
-        "position": {x: 600, y: 200},
-        "width": "10",
-        "height": "10"
+        x: 590,
+        y: 300,
+        height: 10,
+        width: 10,
+        color: "#27AE60"
       }
     },
     {

@@ -1,6 +1,81 @@
 ;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
 'use strict';
 
+function GameConfiguration(conf){
+  this.parseConf(conf);
+}
+
+GameConfiguration.prototype.parseConf = function(conf) {
+  if (!conf.world || !conf.levels){
+    throw new Error("Required params not provided");
+  }
+
+  this.world = conf.world;
+  this.levels = conf.levels;
+};
+
+GameConfiguration.prototype.getLevel = function(level) {
+  return this.levels[level-1];
+};
+
+exports.init = function(conf){
+  return new GameConfiguration(conf)
+}
+},{}],2:[function(require,module,exports){
+module.exports = {
+  "world": {
+    "width": 600,
+    "height": 600,
+    "background-color": "black",
+    "box-color": "blue",
+    "actor": "white"
+  },
+  "levels": [
+    {
+      blocks: [
+      {x: 1, y: 1},
+      {x: 50, y: 60},
+      {x: 21, y: 31}
+      ],
+      "start": {
+        x: 300,
+        y: 580,
+        width: 10,
+        height: 10,
+        color: "#ECF0F1"
+      },
+      "out": {
+        x: 590,
+        y: 300,
+        height: 10,
+        width: 10,
+        color: "#27AE60"
+      }
+    },
+    {
+      blocks: [
+      {x: 1, y: 50},
+      {x: 23, y: 500},
+      {x: 301, y: 400},
+      {x: 491, y: 111}
+      ],
+      "start": {
+        x: 300,
+        y: 500,
+        height: 10,
+        width: 10
+      },
+      "out": {
+        "position": {x: 600, y: 200},
+        "width": "10",
+        "height": "10"
+      }
+    }
+  ]
+}
+},{}],3:[function(require,module,exports){
+'use strict';
+
 exports.parsePosition = function(position){
   var results = [];
 
@@ -33,79 +108,6 @@ exports.generate = function(canvas, position){
 
   return canvas;
 };
-},{}],2:[function(require,module,exports){
-'use strict';
-
-function GameConfiguration(conf){
-  this.parseConf(conf);
-}
-
-GameConfiguration.prototype.parseConf = function(conf) {
-  if (!conf.world || !conf.levels){
-    throw new Error("Required params not provided");
-  }
-
-  this.world = conf.world;
-  this.levels = conf.levels;
-};
-
-GameConfiguration.prototype.getLevel = function(level) {
-  return this.levels[level-1];
-};
-
-exports.init = function(conf){
-  return new GameConfiguration(conf)
-}
-},{}],3:[function(require,module,exports){
-module.exports = {
-  "world": {
-    "width": 600,
-    "height": 600,
-    "background-color": "black",
-    "box-color": "blue",
-    "actor": "white"
-  },
-  "levels": [
-    {
-      blocks: [
-      {x: 1, y: 1},
-      {x: 50, y: 60},
-      {x: 21, y: 31}
-      ],
-      "start": {
-        x: 300,
-        y: 580,
-        width: 10,
-        height: 10,
-        color: "#ECF0F1"
-      },
-      "out": {
-        "position": {x: 600, y: 200},
-        "width": "10",
-        "height": "10"
-      }
-    },
-    {
-      blocks: [
-      {x: 1, y: 50},
-      {x: 23, y: 500},
-      {x: 301, y: 400},
-      {x: 491, y: 111}
-      ],
-      "start": {
-        x: 300,
-        y: 500,
-        height: 10,
-        width: 10
-      },
-      "out": {
-        "position": {x: 600, y: 200},
-        "width": "10",
-        "height": "10"
-      }
-    }
-  ]
-}
 },{}],4:[function(require,module,exports){
 /*
  * find-your-way-out
@@ -142,7 +144,7 @@ shell.bind("move-up", "up", "W");
 // when ready
 shell.on("init", function(){
   var canvas = document.getElementById('fywo'),
-      gameLevel = game.getLevel(1);
+      gameLevel = game.getLevel(1); // todo this sucks
 
   ctx = canvas.getContext("2d");
 
@@ -150,7 +152,9 @@ shell.on("init", function(){
 
   worldGenerator.generate(canvas, gameLevel.start);
   worldGenerator.generate(canvas, gameLevel.blocks);
+  worldGenerator.generate(canvas, gameLevel.out);
 
+  // todo this sucks
   actor.x = gameLevel.start.x;
   actor.y = gameLevel.start.y;
   actor.w = gameLevel.start.width;
@@ -162,27 +166,20 @@ shell.on("tick", function() {
   if (actor.isMoving) {
     return;
   }
-  console.log("tick");
+
   if(shell.wasDown("move-left")) {
-    console.log("left");
     actor.moving.x = -1;
     actor.moving.y = 0;
     actor.isMoving = true;
-  }
-  if(shell.wasDown("move-right")) {
-    console.log("right");
+  } else if(shell.wasDown("move-right")) {
     actor.moving.x = 1;
     actor.moving.y = 0;
     actor.isMoving = true;
-  }
-  if(shell.wasDown("move-up")) {
-    console.log("up");
+  } else if(shell.wasDown("move-up")) {
     actor.moving.x = 0;
     actor.moving.y = -1;
     actor.isMoving = true;
-  }
-  if(shell.wasDown("move-down")) {
-    console.log("down");
+  } else if(shell.wasDown("move-down")) {
     actor.moving.x = 0;
     actor.moving.y = 1;
     actor.isMoving = true;
@@ -205,7 +202,7 @@ shell.on("render", function() {
 
 
 
-},{"./gameConfiguration":2,"./worldGenerator":1,"../conf/game":3,"game-shell":5}],6:[function(require,module,exports){
+},{"./gameConfiguration":1,"./worldGenerator":3,"../conf/game":2,"game-shell":5}],6:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1669,20 +1666,6 @@ module.exports = createShell
       loaded ? fn() : fns.push(fn)
     })
 })
-},{}],14:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
 },{}],13:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
@@ -1822,6 +1805,76 @@ for(i = 112; i < 136; ++i) {
 }
 
 })()
+},{}],14:[function(require,module,exports){
+"use strict"
+
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
+},{}],16:[function(require,module,exports){
+"use strict"
+
+function lowerBound_cmp(array, value, compare, lo, hi) {
+  lo = lo|0
+  hi = hi|0
+  while(lo < hi) {
+    var m = (lo + hi) >>> 1
+      , v = compare(value, array[m])
+    if(v < 0) {
+      hi = m-1
+    } else if(v > 0) {
+      lo = m+1
+    } else {
+      hi = m
+    }
+  }
+  if(compare(array[lo], value) <= 0) {
+    return lo
+  }
+  return lo - 1
+}
+
+function lowerBound_def(array, value, lo, hi) {
+  lo = lo|0
+  hi = hi|0
+  while(lo < hi) {
+    var m = (lo + hi) >>> 1
+    if(value < array[m]) {
+      hi = m-1
+    } else if(value > array[m]) {
+      lo = m+1
+    } else {
+      hi = m
+    }
+  }
+  if(array[lo] <= value) {
+    return lo
+  }
+  return lo - 1
+}
+
+function lowerBound(array, value, compare, lo, hi) {
+  if(!lo) {
+    lo = 0
+  }
+  if(typeof(hi) !== "number") {
+    hi = array.length-1
+  }
+  if(compare) {
+    return lowerBound_cmp(array, value, compare, lo, hi)
+  }
+  return lowerBound_def(array, value, lo, hi)
+}
+
+module.exports = lowerBound
 },{}],15:[function(require,module,exports){
 "use strict"
 
@@ -1880,62 +1933,6 @@ function unique(list, compare, sorted) {
 }
 
 module.exports = unique
-},{}],16:[function(require,module,exports){
-"use strict"
-
-function lowerBound_cmp(array, value, compare, lo, hi) {
-  lo = lo|0
-  hi = hi|0
-  while(lo < hi) {
-    var m = (lo + hi) >>> 1
-      , v = compare(value, array[m])
-    if(v < 0) {
-      hi = m-1
-    } else if(v > 0) {
-      lo = m+1
-    } else {
-      hi = m
-    }
-  }
-  if(compare(array[lo], value) <= 0) {
-    return lo
-  }
-  return lo - 1
-}
-
-function lowerBound_def(array, value, lo, hi) {
-  lo = lo|0
-  hi = hi|0
-  while(lo < hi) {
-    var m = (lo + hi) >>> 1
-    if(value < array[m]) {
-      hi = m-1
-    } else if(value > array[m]) {
-      lo = m+1
-    } else {
-      hi = m
-    }
-  }
-  if(array[lo] <= value) {
-    return lo
-  }
-  return lo - 1
-}
-
-function lowerBound(array, value, compare, lo, hi) {
-  if(!lo) {
-    lo = 0
-  }
-  if(typeof(hi) !== "number") {
-    hi = array.length-1
-  }
-  if(compare) {
-    return lowerBound_cmp(array, value, compare, lo, hi)
-  }
-  return lowerBound_def(array, value, lo, hi)
-}
-
-module.exports = lowerBound
 },{}],17:[function(require,module,exports){
 "use strict"
 

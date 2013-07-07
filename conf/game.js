@@ -22,7 +22,8 @@ module.exports = {
         "width": "10",
         "height": "10"
       }
-    }, {
+    },
+    {
       blocks: [
       {x: 1, y: 50},
       {x: 23, y: 500},

@@ -4,6 +4,8 @@ A simple game I made in order to try out game-shell created by @mikolalysenko. T
 
 The purpose of this game is to find a way out of the box. Simple Game.
 
+**This game is still in progress**
+
 ## What If?
 
 What if, in order to set the configuration of each level, I just need to write this:

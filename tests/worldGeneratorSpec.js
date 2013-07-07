@@ -29,12 +29,6 @@ describe("Generating World", function(){
     });
   });
 
-  describe("Setting global configuration for each level's setting", function(){
-    it("Should apply global settings if none provided", function(){
-
-    });
-  });
-
   describe("Placing items on canvas", function(){
     var canvas;
 

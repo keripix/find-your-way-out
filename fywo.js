@@ -1,60 +1,5 @@
 ;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
-module.exports = {
-  "world": {
-    "width": 600,
-    "height": 600,
-    "background-color": "black",
-    "box-color": "blue",
-    "actor": "white"
-  },
-  "levels": [
-    {
-      blocks: [
-      {x: 300, y: 290},
-      {x: 50, y: 60},
-      {x: 21, y: 31}
-      ],
-      "start": {
-        x: 300,
-        y: 580,
-        width: 10,
-        height: 10,
-        color: "#ECF0F1"
-      },
-      "out": {
-        x: 590,
-        y: 300,
-        height: 10,
-        width: 10,
-        color: "#27AE60"
-      }
-    },
-    {
-      blocks: [
-      {x: 1, y: 50},
-      {x: 23, y: 500},
-      {x: 301, y: 400},
-      {x: 491, y: 111}
-      ],
-      "start": {
-        x: 300,
-        y: 500,
-        height: 10,
-        width: 10,
-        color: "#ECF0F1"
-      },
-      "out": {
-        x: 590,
-        y: 300,
-        width: 10,
-        height: 10,
-        color: "#27AE60"
-      }
-    }
-  ]
-}
-},{}],2:[function(require,module,exports){
-'use strict';
+(function(){'use strict';
 
 function GameConfiguration(conf){
   this.parseConf(conf);
@@ -67,6 +12,18 @@ GameConfiguration.prototype.parseConf = function(conf) {
 
   this.world = conf.world;
   this.levels = conf.levels;
+
+  // will set global configuration for each level if none is
+  // provided
+  this.levels.forEach(function(l){
+    l.actor.width = l.actor.width || conf.world.actor.width;
+    l.actor.height = l.actor.height || conf.world.actor.height;
+    l.actor.color = l.actor.color || conf.world.actor.color;
+
+    l.out.width = l.out.width || conf.world.out.width;
+    l.out.height = l.out.height || conf.world.out.height;
+    l.out.color = l.out.color || conf.world.out.color;
+  });
 };
 
 GameConfiguration.prototype.getLevel = function(level) {
@@ -76,7 +33,8 @@ GameConfiguration.prototype.getLevel = function(level) {
 exports.init = function(conf){
   return new GameConfiguration(conf)
 }
-},{}],3:[function(require,module,exports){
+})()
+},{}],2:[function(require,module,exports){
 'use strict';
 
 exports.parsePosition = function(position){
@@ -111,6 +69,62 @@ exports.generate = function(canvas, position){
 
   return canvas;
 };
+},{}],3:[function(require,module,exports){
+module.exports = {
+  "world": {
+    "width": 600,
+    "height": 600,
+    actor: {
+      width: 10,
+      height: 10,
+      color: "#ECF0F1"
+    },
+    out: {
+      width: 10,
+      height: 10,
+      color: "#27AE60"
+    }
+  },
+  "levels": [
+    {
+      blocks: [
+      {x: 300, y: 290},
+      {x: 50, y: 60},
+      {x: 21, y: 31}
+      ],
+      actor: {
+        x: 300,
+        y: 580,
+      },
+      out: {
+        x: 590,
+        y: 300,
+        height: 10,
+        width: 10,
+        color: "#27AE60"
+      }
+    },
+    {
+      blocks: [
+      {x: 1, y: 50},
+      {x: 23, y: 500},
+      {x: 301, y: 400},
+      {x: 491, y: 111}
+      ],
+      actor: {
+        x: 300,
+        y: 500,
+        height: 10,
+        width: 10,
+        color: "#ECF0F1"
+      },
+      out: {
+        x: 590,
+        y: 300
+      }
+    }
+  ]
+}
 },{}],4:[function(require,module,exports){
 module.exports = function(actor, blocks, exit){
   var check = "x",
@@ -186,7 +200,6 @@ shell.bind("move-down", "down", "S");
 shell.bind("move-up", "up", "W");
 
 function startLevel(canvas, gameLevel){
-  console.log("Start level " + currentLevel);
   ctx.clearRect(0, 0, 600, 600);
 
   if (!gameLevel) {
@@ -216,7 +229,6 @@ function startLevel(canvas, gameLevel){
 
 // when ready
 shell.on("init", function(){
-  console.log(conf.levels.length);
   canvas = document.getElementById('fywo');
   gameLevel = game.getLevel(currentLevel); // TODO not beautifull
 
@@ -227,7 +239,6 @@ shell.on("init", function(){
 });
 
 shell.on("tick", function() {
-  console.log("tick");
   if (actor.hasWon) {
     gameLevel = game.getLevel(++currentLevel);
     startLevel(canvas, gameLevel);
@@ -279,7 +290,7 @@ shell.on("render", function() {
 
 
 
-},{"../conf/game":1,"./gameConfiguration":2,"./worldGenerator":3,"./aware":4,"game-shell":6}],7:[function(require,module,exports){
+},{"./gameConfiguration":1,"./worldGenerator":2,"../conf/game":3,"./aware":4,"game-shell":6}],7:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -903,16 +914,6 @@ if (!window.cancelAnimationFrame)
     };
 
 },{}],11:[function(require,module,exports){
-if(window.performance.now) {
-  module.exports = function() { return window.performance.now() }
-} else if(window.performance.webktiNow) {
-  module.exports = function() { return window.performance.webkitNow() }
-} else if(Date.now) {
-  module.exports = Date.now
-} else {
-  module.exports = function() { return (new Date()).getTime() }
-}
-},{}],12:[function(require,module,exports){
 //Adapted from here: https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel?redirectlocale=en-US&redirectslug=DOM%2FMozilla_event_reference%2Fwheel
 
 var prefix = "", _addEventListener, onwheel, support;
@@ -972,6 +973,16 @@ module.exports = function( elem, callback, useCapture ) {
     _addWheelListener( elem, "MozMousePixelScroll", callback, useCapture );
   }
 };
+},{}],12:[function(require,module,exports){
+if(window.performance.now) {
+  module.exports = function() { return window.performance.now() }
+} else if(window.performance.webktiNow) {
+  module.exports = function() { return window.performance.webkitNow() }
+} else if(Date.now) {
+  module.exports = Date.now
+} else {
+  module.exports = function() { return (new Date()).getTime() }
+}
 },{}],6:[function(require,module,exports){
 "use strict"
 
@@ -1688,7 +1699,76 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":12,"./lib/hrtime-polyfill.js":11,"domready":13,"vkey":14,"invert-hash":15,"uniq":16,"lower-bound":17,"iota-array":18}],14:[function(require,module,exports){
+},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"domready":13,"vkey":14,"invert-hash":15,"uniq":16,"lower-bound":17,"iota-array":18}],13:[function(require,module,exports){
+/*!
+  * domready (c) Dustin Diaz 2012 - License MIT
+  */
+!function (name, definition) {
+  if (typeof module != 'undefined') module.exports = definition()
+  else if (typeof define == 'function' && typeof define.amd == 'object') define(definition)
+  else this[name] = definition()
+}('domready', function (ready) {
+
+  var fns = [], fn, f = false
+    , doc = document
+    , testEl = doc.documentElement
+    , hack = testEl.doScroll
+    , domContentLoaded = 'DOMContentLoaded'
+    , addEventListener = 'addEventListener'
+    , onreadystatechange = 'onreadystatechange'
+    , readyState = 'readyState'
+    , loaded = /^loade|c/.test(doc[readyState])
+
+  function flush(f) {
+    loaded = 1
+    while (f = fns.shift()) f()
+  }
+
+  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
+    doc.removeEventListener(domContentLoaded, fn, f)
+    flush()
+  }, f)
+
+
+  hack && doc.attachEvent(onreadystatechange, fn = function () {
+    if (/^c/.test(doc[readyState])) {
+      doc.detachEvent(onreadystatechange, fn)
+      flush()
+    }
+  })
+
+  return (ready = hack ?
+    function (fn) {
+      self != top ?
+        loaded ? fn() : fns.push(fn) :
+        function () {
+          try {
+            testEl.doScroll('left')
+          } catch (e) {
+            return setTimeout(function() { ready(fn) }, 50)
+          }
+          fn()
+        }()
+    } :
+    function (fn) {
+      loaded ? fn() : fns.push(fn)
+    })
+})
+},{}],15:[function(require,module,exports){
+"use strict"
+
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
+},{}],14:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -1827,75 +1907,6 @@ for(i = 112; i < 136; ++i) {
 }
 
 })()
-},{}],13:[function(require,module,exports){
-/*!
-  * domready (c) Dustin Diaz 2012 - License MIT
-  */
-!function (name, definition) {
-  if (typeof module != 'undefined') module.exports = definition()
-  else if (typeof define == 'function' && typeof define.amd == 'object') define(definition)
-  else this[name] = definition()
-}('domready', function (ready) {
-
-  var fns = [], fn, f = false
-    , doc = document
-    , testEl = doc.documentElement
-    , hack = testEl.doScroll
-    , domContentLoaded = 'DOMContentLoaded'
-    , addEventListener = 'addEventListener'
-    , onreadystatechange = 'onreadystatechange'
-    , readyState = 'readyState'
-    , loaded = /^loade|c/.test(doc[readyState])
-
-  function flush(f) {
-    loaded = 1
-    while (f = fns.shift()) f()
-  }
-
-  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
-    doc.removeEventListener(domContentLoaded, fn, f)
-    flush()
-  }, f)
-
-
-  hack && doc.attachEvent(onreadystatechange, fn = function () {
-    if (/^c/.test(doc[readyState])) {
-      doc.detachEvent(onreadystatechange, fn)
-      flush()
-    }
-  })
-
-  return (ready = hack ?
-    function (fn) {
-      self != top ?
-        loaded ? fn() : fns.push(fn) :
-        function () {
-          try {
-            testEl.doScroll('left')
-          } catch (e) {
-            return setTimeout(function() { ready(fn) }, 50)
-          }
-          fn()
-        }()
-    } :
-    function (fn) {
-      loaded ? fn() : fns.push(fn)
-    })
-})
-},{}],15:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
 },{}],16:[function(require,module,exports){
 "use strict"
 
@@ -1954,6 +1965,18 @@ function unique(list, compare, sorted) {
 }
 
 module.exports = unique
+},{}],18:[function(require,module,exports){
+"use strict"
+
+function iota(n) {
+  var result = new Array(n)
+  for(var i=0; i<n; ++i) {
+    result[i] = i
+  }
+  return result
+}
+
+module.exports = iota
 },{}],17:[function(require,module,exports){
 "use strict"
 
@@ -2010,17 +2033,5 @@ function lowerBound(array, value, compare, lo, hi) {
 }
 
 module.exports = lowerBound
-},{}],18:[function(require,module,exports){
-"use strict"
-
-function iota(n) {
-  var result = new Array(n)
-  for(var i=0; i<n; ++i) {
-    result[i] = i
-  }
-  return result
-}
-
-module.exports = iota
 },{}]},{},[5])
 ;

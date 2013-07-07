@@ -15,6 +15,19 @@ describe("Game Configuration", function(){
     // it("Should throw Error if bad conf is passed", function(){
     //   expect(gameConfig.init({bla:1,bli:2})).toThrow();
     // });
+    //
+
+    describe("Setting global configuration for each level's setting", function(){
+      it("Should apply global settings if none provided", function(){
+        var gameConf = gameConfig.init(conf);
+
+        expect(gameConf.getLevel(1).actor.width).toEqual(10);
+        expect(gameConf.getLevel(1).actor.color).toEqual("#ECF0F1");
+
+        expect(gameConf.getLevel(2).out.width).toEqual(10);
+        expect(gameConf.getLevel(2).out.color).toEqual("#27AE60");
+      });
+    });
 
     it("Should parsed the level correctly", function(){
       var gameConf = gameConfig.init(conf);

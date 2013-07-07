@@ -1,62 +1,4 @@
 ;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
-'use strict';
-
-function GameConfiguration(conf){
-  this.parseConf(conf);
-}
-
-GameConfiguration.prototype.parseConf = function(conf) {
-  if (!conf.world || !conf.levels){
-    throw new Error("Required params not provided");
-  }
-
-  this.world = conf.world;
-  this.levels = conf.levels;
-};
-
-GameConfiguration.prototype.getLevel = function(level) {
-  return this.levels[level-1];
-};
-
-exports.init = function(conf){
-  return new GameConfiguration(conf)
-}
-},{}],2:[function(require,module,exports){
-'use strict';
-
-exports.parsePosition = function(position){
-  var results = [];
-
-  // if this is not an array, then make it an array
-  if (toString.call(position) != '[object Array]'){
-    position = [position];
-  }
-
-  position.forEach(function(pos){
-    results.push({
-      x: pos.x || 0,
-      y: pos.y || 0,
-      width: pos.width || 10,
-      height: pos.height || 10,
-      color: pos.color || "#000000"
-    });
-  });
-
-  return results;
-};
-
-exports.generate = function(canvas, position){
-  var points = this.parsePosition(position),
-      ctx = canvas.getContext('2d');
-
-  points.forEach(function(p){
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x, p.y, p.width, p.height);
-  });
-
-  return canvas;
-};
-},{}],3:[function(require,module,exports){
 module.exports = {
   "world": {
     "width": 600,
@@ -111,6 +53,64 @@ module.exports = {
     }
   ]
 }
+},{}],2:[function(require,module,exports){
+'use strict';
+
+function GameConfiguration(conf){
+  this.parseConf(conf);
+}
+
+GameConfiguration.prototype.parseConf = function(conf) {
+  if (!conf.world || !conf.levels){
+    throw new Error("Required params not provided");
+  }
+
+  this.world = conf.world;
+  this.levels = conf.levels;
+};
+
+GameConfiguration.prototype.getLevel = function(level) {
+  return this.levels[level-1];
+};
+
+exports.init = function(conf){
+  return new GameConfiguration(conf)
+}
+},{}],3:[function(require,module,exports){
+'use strict';
+
+exports.parsePosition = function(position){
+  var results = [];
+
+  // if this is not an array, then make it an array
+  if (toString.call(position) != '[object Array]'){
+    position = [position];
+  }
+
+  position.forEach(function(pos){
+    results.push({
+      x: pos.x || 0,
+      y: pos.y || 0,
+      width: pos.width || 10,
+      height: pos.height || 10,
+      color: pos.color || "#000000"
+    });
+  });
+
+  return results;
+};
+
+exports.generate = function(canvas, position){
+  var points = this.parsePosition(position),
+      ctx = canvas.getContext('2d');
+
+  points.forEach(function(p){
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x, p.y, p.width, p.height);
+  });
+
+  return canvas;
+};
 },{}],4:[function(require,module,exports){
 module.exports = function(actor, blocks, exit){
   var check = "x",
@@ -189,9 +189,15 @@ function startLevel(canvas, gameLevel){
   console.log("Start level " + currentLevel);
   ctx.clearRect(0, 0, 600, 600);
 
-  worldGenerator.generate(canvas, gameLevel.start);
-  worldGenerator.generate(canvas, gameLevel.blocks);
-  worldGenerator.generate(canvas, gameLevel.out);
+  if (!gameLevel) {
+    return;
+  }
+
+  if (currentLevel > conf.levels.length){
+    // no more levels
+    shell.paused = true;
+    return;
+  }
 
   // TODO not beautifull
   actor.x = gameLevel.start.x;
@@ -202,10 +208,15 @@ function startLevel(canvas, gameLevel){
   actor.hasWon = false;
   actor.isMoving = false;
   actor.hasLost = false;
+
+  worldGenerator.generate(canvas, gameLevel.start);
+  worldGenerator.generate(canvas, gameLevel.blocks);
+  worldGenerator.generate(canvas, gameLevel.out);
 }
 
 // when ready
 shell.on("init", function(){
+  console.log(conf.levels.length);
   canvas = document.getElementById('fywo');
   gameLevel = game.getLevel(currentLevel); // TODO not beautifull
 
@@ -216,6 +227,7 @@ shell.on("init", function(){
 });
 
 shell.on("tick", function() {
+  console.log("tick");
   if (actor.hasWon) {
     gameLevel = game.getLevel(++currentLevel);
     startLevel(canvas, gameLevel);
@@ -267,7 +279,7 @@ shell.on("render", function() {
 
 
 
-},{"./gameConfiguration":1,"./worldGenerator":2,"../conf/game":3,"./aware":4,"game-shell":6}],7:[function(require,module,exports){
+},{"../conf/game":1,"./gameConfiguration":2,"./worldGenerator":3,"./aware":4,"game-shell":6}],7:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -861,6 +873,46 @@ exports.format = function(f) {
 };
 
 },{"events":8}],10:[function(require,module,exports){
+// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+ 
+// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+ 
+// MIT license
+var lastTime = 0;
+var vendors = ['ms', 'moz', 'webkit', 'o'];
+for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+                               || window[vendors[x]+'CancelRequestAnimationFrame'];
+}
+
+if (!window.requestAnimationFrame)
+    window.requestAnimationFrame = function(callback, element) {
+        var currTime = new Date().getTime();
+        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+        var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+          timeToCall);
+        lastTime = currTime + timeToCall;
+        return id;
+    };
+
+if (!window.cancelAnimationFrame)
+    window.cancelAnimationFrame = function(id) {
+        clearTimeout(id);
+    };
+
+},{}],11:[function(require,module,exports){
+if(window.performance.now) {
+  module.exports = function() { return window.performance.now() }
+} else if(window.performance.webktiNow) {
+  module.exports = function() { return window.performance.webkitNow() }
+} else if(Date.now) {
+  module.exports = Date.now
+} else {
+  module.exports = function() { return (new Date()).getTime() }
+}
+},{}],12:[function(require,module,exports){
 //Adapted from here: https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel?redirectlocale=en-US&redirectslug=DOM%2FMozilla_event_reference%2Fwheel
 
 var prefix = "", _addEventListener, onwheel, support;
@@ -920,46 +972,6 @@ module.exports = function( elem, callback, useCapture ) {
     _addWheelListener( elem, "MozMousePixelScroll", callback, useCapture );
   }
 };
-},{}],11:[function(require,module,exports){
-// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
- 
-// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
- 
-// MIT license
-var lastTime = 0;
-var vendors = ['ms', 'moz', 'webkit', 'o'];
-for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
-                               || window[vendors[x]+'CancelRequestAnimationFrame'];
-}
-
-if (!window.requestAnimationFrame)
-    window.requestAnimationFrame = function(callback, element) {
-        var currTime = new Date().getTime();
-        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-        var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
-          timeToCall);
-        lastTime = currTime + timeToCall;
-        return id;
-    };
-
-if (!window.cancelAnimationFrame)
-    window.cancelAnimationFrame = function(id) {
-        clearTimeout(id);
-    };
-
-},{}],12:[function(require,module,exports){
-if(window.performance.now) {
-  module.exports = function() { return window.performance.now() }
-} else if(window.performance.webktiNow) {
-  module.exports = function() { return window.performance.webkitNow() }
-} else if(Date.now) {
-  module.exports = Date.now
-} else {
-  module.exports = function() { return (new Date()).getTime() }
-}
 },{}],6:[function(require,module,exports){
 "use strict"
 
@@ -1676,120 +1688,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":8,"util":9,"./lib/mousewheel-polyfill.js":10,"./lib/raf-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"uniq":13,"domready":14,"vkey":15,"invert-hash":16,"lower-bound":17,"iota-array":18}],13:[function(require,module,exports){
-"use strict"
-
-function unique_pred(list, compare) {
-  var ptr = 1
-    , len = list.length
-    , a=list[0], b=list[0]
-  for(var i=1; i<len; ++i) {
-    b = a
-    a = list[i]
-    if(compare(a, b)) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      list[ptr++] = a
-    }
-  }
-  list.length = ptr
-  return list
-}
-
-function unique_eq(list) {
-  var ptr = 1
-    , len = list.length
-    , a=list[0], b = list[0]
-  for(var i=1; i<len; ++i, b=a) {
-    b = a
-    a = list[i]
-    if(a !== b) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      list[ptr++] = a
-    }
-  }
-  list.length = ptr
-  return list
-}
-
-function unique(list, compare, sorted) {
-  if(list.length === 0) {
-    return []
-  }
-  if(compare) {
-    if(!sorted) {
-      list.sort(compare)
-    }
-    return unique_pred(list, compare)
-  }
-  if(!sorted) {
-    list.sort()
-  }
-  return unique_eq(list)
-}
-
-module.exports = unique
-},{}],14:[function(require,module,exports){
-/*!
-  * domready (c) Dustin Diaz 2012 - License MIT
-  */
-!function (name, definition) {
-  if (typeof module != 'undefined') module.exports = definition()
-  else if (typeof define == 'function' && typeof define.amd == 'object') define(definition)
-  else this[name] = definition()
-}('domready', function (ready) {
-
-  var fns = [], fn, f = false
-    , doc = document
-    , testEl = doc.documentElement
-    , hack = testEl.doScroll
-    , domContentLoaded = 'DOMContentLoaded'
-    , addEventListener = 'addEventListener'
-    , onreadystatechange = 'onreadystatechange'
-    , readyState = 'readyState'
-    , loaded = /^loade|c/.test(doc[readyState])
-
-  function flush(f) {
-    loaded = 1
-    while (f = fns.shift()) f()
-  }
-
-  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
-    doc.removeEventListener(domContentLoaded, fn, f)
-    flush()
-  }, f)
-
-
-  hack && doc.attachEvent(onreadystatechange, fn = function () {
-    if (/^c/.test(doc[readyState])) {
-      doc.detachEvent(onreadystatechange, fn)
-      flush()
-    }
-  })
-
-  return (ready = hack ?
-    function (fn) {
-      self != top ?
-        loaded ? fn() : fns.push(fn) :
-        function () {
-          try {
-            testEl.doScroll('left')
-          } catch (e) {
-            return setTimeout(function() { ready(fn) }, 50)
-          }
-          fn()
-        }()
-    } :
-    function (fn) {
-      loaded ? fn() : fns.push(fn)
-    })
-})
-},{}],15:[function(require,module,exports){
+},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":12,"./lib/hrtime-polyfill.js":11,"domready":13,"vkey":14,"invert-hash":15,"uniq":16,"lower-bound":17,"iota-array":18}],14:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -1928,7 +1827,62 @@ for(i = 112; i < 136; ++i) {
 }
 
 })()
-},{}],16:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
+/*!
+  * domready (c) Dustin Diaz 2012 - License MIT
+  */
+!function (name, definition) {
+  if (typeof module != 'undefined') module.exports = definition()
+  else if (typeof define == 'function' && typeof define.amd == 'object') define(definition)
+  else this[name] = definition()
+}('domready', function (ready) {
+
+  var fns = [], fn, f = false
+    , doc = document
+    , testEl = doc.documentElement
+    , hack = testEl.doScroll
+    , domContentLoaded = 'DOMContentLoaded'
+    , addEventListener = 'addEventListener'
+    , onreadystatechange = 'onreadystatechange'
+    , readyState = 'readyState'
+    , loaded = /^loade|c/.test(doc[readyState])
+
+  function flush(f) {
+    loaded = 1
+    while (f = fns.shift()) f()
+  }
+
+  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
+    doc.removeEventListener(domContentLoaded, fn, f)
+    flush()
+  }, f)
+
+
+  hack && doc.attachEvent(onreadystatechange, fn = function () {
+    if (/^c/.test(doc[readyState])) {
+      doc.detachEvent(onreadystatechange, fn)
+      flush()
+    }
+  })
+
+  return (ready = hack ?
+    function (fn) {
+      self != top ?
+        loaded ? fn() : fns.push(fn) :
+        function () {
+          try {
+            testEl.doScroll('left')
+          } catch (e) {
+            return setTimeout(function() { ready(fn) }, 50)
+          }
+          fn()
+        }()
+    } :
+    function (fn) {
+      loaded ? fn() : fns.push(fn)
+    })
+})
+},{}],15:[function(require,module,exports){
 "use strict"
 
 function invert(hash) {
@@ -1942,6 +1896,64 @@ function invert(hash) {
 }
 
 module.exports = invert
+},{}],16:[function(require,module,exports){
+"use strict"
+
+function unique_pred(list, compare) {
+  var ptr = 1
+    , len = list.length
+    , a=list[0], b=list[0]
+  for(var i=1; i<len; ++i) {
+    b = a
+    a = list[i]
+    if(compare(a, b)) {
+      if(i === ptr) {
+        ptr++
+        continue
+      }
+      list[ptr++] = a
+    }
+  }
+  list.length = ptr
+  return list
+}
+
+function unique_eq(list) {
+  var ptr = 1
+    , len = list.length
+    , a=list[0], b = list[0]
+  for(var i=1; i<len; ++i, b=a) {
+    b = a
+    a = list[i]
+    if(a !== b) {
+      if(i === ptr) {
+        ptr++
+        continue
+      }
+      list[ptr++] = a
+    }
+  }
+  list.length = ptr
+  return list
+}
+
+function unique(list, compare, sorted) {
+  if(list.length === 0) {
+    return []
+  }
+  if(compare) {
+    if(!sorted) {
+      list.sort(compare)
+    }
+    return unique_pred(list, compare)
+  }
+  if(!sorted) {
+    list.sort()
+  }
+  return unique_eq(list)
+}
+
+module.exports = unique
 },{}],17:[function(require,module,exports){
 "use strict"
 

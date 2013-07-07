@@ -28,5 +28,12 @@ describe("Game Configuration", function(){
 
       expect(gameConf.getLevel(2).start.y).toEqual(500);
     });
+
+    it("Should not proceed when the level requested is more than what is available", function(){
+      var gameConf = gameConfig.init(conf),
+          level = gameConf.getLevel(10);
+
+      expect(level).toBeUndefined();
+    });
   });
 });

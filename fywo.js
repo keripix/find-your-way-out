@@ -1,4 +1,43 @@
 ;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
+exports.create = function(conf){
+  return new Block(conf);
+};
+
+function Block(conf){
+  this.x = conf.x;
+  this.y = conf.y;
+  this.width = conf.width;
+  this.height = conf.height;
+  this.midX = this.x + (this.width/2);
+  this.midY = this.y + (this.height/2);
+  this.color = conf.color;
+  this.isMoving = false;
+  this.requestRendering = false;
+  this.moving = {amount: 0, value: 0, direction: 0};
+}
+
+Block.prototype.moveX = function(value) {
+  this.moving = {amount: value + "x", value: value, direction: "x"};
+  this.x += value;
+  this.midX += value;
+  this.isMoving = true;
+  this.requestRendering = true;
+};
+
+Block.prototype.moveY = function(value) {
+  this.moving = {amount: value + "y", value: value, direction: "y"};
+  this.y += value;
+  this.midY += value;
+  this.isMoving = true;
+  this.requestRendering = true;
+};
+
+Block.prototype.stop = function() {
+  this.moving = {amount: 0, value: 0, direction: 0};
+  this.isMoving = false;
+  this.requestRendering = false;
+};
+},{}],2:[function(require,module,exports){
 'use strict';
 
 exports.parsePosition = function(position){
@@ -32,43 +71,6 @@ exports.generate = function(canvas, position){
   });
 
   return canvas;
-};
-},{}],2:[function(require,module,exports){
-exports.create = function(conf){
-  return new Block(conf);
-};
-
-function Block(conf){
-  this.x = conf.x;
-  this.y = conf.y;
-  this.width = conf.width;
-  this.height = conf.height;
-  this.midX = this.x + (this.width/2);
-  this.midY = this.y + (this.height/2);
-  this.color = conf.color;
-  this.isMoving = false;
-  this.requestRendering = false;
-  this.moving = {amount: 0, value: 0, direction: 0};
-}
-
-Block.prototype.moveX = function(value) {
-  this.moving = {amount: value + "x", value: value, direction: "x"};
-  this.x += value;
-  this.midX += value;
-  this.requestRendering = true;
-};
-
-Block.prototype.moveY = function(value) {
-  this.moving = {amount: value + "y", value: value, direction: "y"};
-  this.y += value;
-  this.midY += value;
-  this.requestRendering = true;
-};
-
-Block.prototype.stop = function() {
-  this.moving = {amount: 0, value: 0, direction: 0};
-  this.isMoving = false;
-  this.requestRendering = false;
 };
 },{}],3:[function(require,module,exports){
 module.exports = {
@@ -152,12 +154,13 @@ module.exports = function(actor, blocks, exit, world){
 
   // check the distance between the actor and the exit door
   if (Math.sqrt(Math.pow(actor.midX-exit.midX,2)+Math.pow(actor.midY-exit.midY,2)) <= ((actor[collisionAxis]+exit[collisionAxis])/2)){
-    actor.isMoving = false;
+    actor.stop();
     actor.hasWon = true;
     return;
   }
 
   if (actor.x >= world.width || actor.y >= world.height || actor.x <= 0 || actor.y <= 0){
+    actor.stop();
     actor.hasLost = true;
     return;
   }
@@ -189,17 +192,14 @@ GameConfiguration.prototype.parseConf = function(conf) {
   if (!conf.world || !conf.levels){
     throw new Error("Required params not provided");
   }
-
+  this.conf = conf;
   this.world = conf.world;
   this.levels = [];
 
   // will set global configuration for each level if none is
   // provided
   conf.levels.forEach(function(l){
-    var newLevel = {
-      hasWon: false,
-      hasLost: false
-    };
+    var newLevel = {};
 
     newLevel.actor = actor.create({
       x: l.actor.x,
@@ -237,11 +237,23 @@ GameConfiguration.prototype.getLevel = function(level) {
   return this.levels[level-1];
 };
 
+GameConfiguration.prototype.createActor = function(level) {
+  var levelConf = this.conf.levels[level-1];
+
+  return actor.create({
+    x: levelConf.actor.x,
+    y: levelConf.actor.y,
+    width: levelConf.actor.width || this.world.actor.width,
+    height: levelConf.actor.height || this.world.actor.height,
+    color: levelConf.actor.color || this.world.actor.color
+  });
+};
+
 exports.init = function(conf){
-  return new GameConfiguration(conf)
-}
+  return new GameConfiguration(conf);
+};
 })()
-},{"./block":2,"./actor":6}],7:[function(require,module,exports){
+},{"./actor":6,"./block":1}],7:[function(require,module,exports){
 /*
  * find-your-way-out
  * https://github.com/keripix/find-your-way-out
@@ -290,7 +302,7 @@ function startLevel(){
     return;
   }
 
-  actor = gameLevel.actor;
+  actor = game.createActor(currentLevel);
 
   worldGenerator.generate(canvas, actor);
   worldGenerator.generate(canvasBackground, gameLevel.blocks);
@@ -332,23 +344,22 @@ shell.on("tick", function() {
 
   if(shell.wasDown("move-left") && actor.moving.amount !== -speed+"x") {
     moveDirection = {direction: "x", value: -speed};
-    actor.isMoving = true;
+    actor.requestRendering = true;
   } else if(shell.wasDown("move-right") && actor.moving.value !== speed+"x") {
     moveDirection = {direction: "x", value: speed};
-    actor.isMoving = true;
+    actor.requestRendering = true;
   } else if(shell.wasDown("move-up") && actor.moving.value !== -speed+"y") {
     moveDirection = {direction: "y", value: -speed};
-    actor.isMoving = true;
+    actor.requestRendering = true;
   } else if(shell.wasDown("move-down") && actor.moving.value !== speed+"y") {
     moveDirection = {direction: "y", value: speed};
-    actor.isMoving = true;
+    actor.requestRendering = true;
   }
 });
 
 //Render a frame
 shell.on("render", function() {
-  // console.log(!actor.needsToRender && !actor.isMoving);
-  if (!actor.requestRendering && !actor.isMoving){
+  if (!actor.requestRendering){
     return;
   }
 
@@ -356,7 +367,6 @@ shell.on("render", function() {
 
   ctx.fillStyle = actor.color;
   // eg actor.moveY
-  console.log("move"+moveDirection.direction.toUpperCase());
   actor["move"+moveDirection.direction.toUpperCase()].call(actor, moveDirection.value);
 
   ctx.fillRect(actor.x, actor.y, actor.width, actor.height);
@@ -365,7 +375,7 @@ shell.on("render", function() {
 
 
 
-},{"./gameConfiguration":5,"./worldGenerator":1,"./block":2,"../conf/game":3,"./aware":4,"game-shell":8}],9:[function(require,module,exports){
+},{"./gameConfiguration":5,"./worldGenerator":2,"./block":1,"../conf/game":3,"./aware":4,"game-shell":8}],9:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -969,7 +979,7 @@ exports.create = function(conf){
 
   return actor;
 };
-},{"./block":2}],12:[function(require,module,exports){
+},{"./block":1}],12:[function(require,module,exports){
 // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
  
@@ -1785,79 +1795,62 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":10,"util":11,"./lib/raf-polyfill.js":12,"./lib/mousewheel-polyfill.js":13,"./lib/hrtime-polyfill.js":14,"invert-hash":15,"uniq":16,"vkey":17,"domready":18,"lower-bound":19,"iota-array":20}],15:[function(require,module,exports){
-"use strict"
+},{"events":10,"util":11,"./lib/raf-polyfill.js":12,"./lib/mousewheel-polyfill.js":13,"./lib/hrtime-polyfill.js":14,"domready":15,"vkey":16,"uniq":17,"lower-bound":18,"invert-hash":19,"iota-array":20}],15:[function(require,module,exports){
+/*!
+  * domready (c) Dustin Diaz 2012 - License MIT
+  */
+!function (name, definition) {
+  if (typeof module != 'undefined') module.exports = definition()
+  else if (typeof define == 'function' && typeof define.amd == 'object') define(definition)
+  else this[name] = definition()
+}('domready', function (ready) {
 
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
+  var fns = [], fn, f = false
+    , doc = document
+    , testEl = doc.documentElement
+    , hack = testEl.doScroll
+    , domContentLoaded = 'DOMContentLoaded'
+    , addEventListener = 'addEventListener'
+    , onreadystatechange = 'onreadystatechange'
+    , readyState = 'readyState'
+    , loaded = /^loade|c/.test(doc[readyState])
+
+  function flush(f) {
+    loaded = 1
+    while (f = fns.shift()) f()
   }
-  return result
-}
 
-module.exports = invert
+  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
+    doc.removeEventListener(domContentLoaded, fn, f)
+    flush()
+  }, f)
+
+
+  hack && doc.attachEvent(onreadystatechange, fn = function () {
+    if (/^c/.test(doc[readyState])) {
+      doc.detachEvent(onreadystatechange, fn)
+      flush()
+    }
+  })
+
+  return (ready = hack ?
+    function (fn) {
+      self != top ?
+        loaded ? fn() : fns.push(fn) :
+        function () {
+          try {
+            testEl.doScroll('left')
+          } catch (e) {
+            return setTimeout(function() { ready(fn) }, 50)
+          }
+          fn()
+        }()
+    } :
+    function (fn) {
+      loaded ? fn() : fns.push(fn)
+    })
+})
 },{}],16:[function(require,module,exports){
-"use strict"
-
-function unique_pred(list, compare) {
-  var ptr = 1
-    , len = list.length
-    , a=list[0], b=list[0]
-  for(var i=1; i<len; ++i) {
-    b = a
-    a = list[i]
-    if(compare(a, b)) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      list[ptr++] = a
-    }
-  }
-  list.length = ptr
-  return list
-}
-
-function unique_eq(list) {
-  var ptr = 1
-    , len = list.length
-    , a=list[0], b = list[0]
-  for(var i=1; i<len; ++i, b=a) {
-    b = a
-    a = list[i]
-    if(a !== b) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      list[ptr++] = a
-    }
-  }
-  list.length = ptr
-  return list
-}
-
-function unique(list, compare, sorted) {
-  if(list.length === 0) {
-    return []
-  }
-  if(compare) {
-    if(!sorted) {
-      list.sort(compare)
-    }
-    return unique_pred(list, compare)
-  }
-  if(!sorted) {
-    list.sort()
-  }
-  return unique_eq(list)
-}
-
-module.exports = unique
-},{}],17:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -1996,62 +1989,65 @@ for(i = 112; i < 136; ++i) {
 }
 
 })()
-},{}],18:[function(require,module,exports){
-/*!
-  * domready (c) Dustin Diaz 2012 - License MIT
-  */
-!function (name, definition) {
-  if (typeof module != 'undefined') module.exports = definition()
-  else if (typeof define == 'function' && typeof define.amd == 'object') define(definition)
-  else this[name] = definition()
-}('domready', function (ready) {
+},{}],17:[function(require,module,exports){
+"use strict"
 
-  var fns = [], fn, f = false
-    , doc = document
-    , testEl = doc.documentElement
-    , hack = testEl.doScroll
-    , domContentLoaded = 'DOMContentLoaded'
-    , addEventListener = 'addEventListener'
-    , onreadystatechange = 'onreadystatechange'
-    , readyState = 'readyState'
-    , loaded = /^loade|c/.test(doc[readyState])
-
-  function flush(f) {
-    loaded = 1
-    while (f = fns.shift()) f()
-  }
-
-  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
-    doc.removeEventListener(domContentLoaded, fn, f)
-    flush()
-  }, f)
-
-
-  hack && doc.attachEvent(onreadystatechange, fn = function () {
-    if (/^c/.test(doc[readyState])) {
-      doc.detachEvent(onreadystatechange, fn)
-      flush()
+function unique_pred(list, compare) {
+  var ptr = 1
+    , len = list.length
+    , a=list[0], b=list[0]
+  for(var i=1; i<len; ++i) {
+    b = a
+    a = list[i]
+    if(compare(a, b)) {
+      if(i === ptr) {
+        ptr++
+        continue
+      }
+      list[ptr++] = a
     }
-  })
+  }
+  list.length = ptr
+  return list
+}
 
-  return (ready = hack ?
-    function (fn) {
-      self != top ?
-        loaded ? fn() : fns.push(fn) :
-        function () {
-          try {
-            testEl.doScroll('left')
-          } catch (e) {
-            return setTimeout(function() { ready(fn) }, 50)
-          }
-          fn()
-        }()
-    } :
-    function (fn) {
-      loaded ? fn() : fns.push(fn)
-    })
-})
-},{}],19:[function(require,module,exports){
+function unique_eq(list) {
+  var ptr = 1
+    , len = list.length
+    , a=list[0], b = list[0]
+  for(var i=1; i<len; ++i, b=a) {
+    b = a
+    a = list[i]
+    if(a !== b) {
+      if(i === ptr) {
+        ptr++
+        continue
+      }
+      list[ptr++] = a
+    }
+  }
+  list.length = ptr
+  return list
+}
+
+function unique(list, compare, sorted) {
+  if(list.length === 0) {
+    return []
+  }
+  if(compare) {
+    if(!sorted) {
+      list.sort(compare)
+    }
+    return unique_pred(list, compare)
+  }
+  if(!sorted) {
+    list.sort()
+  }
+  return unique_eq(list)
+}
+
+module.exports = unique
+},{}],18:[function(require,module,exports){
 "use strict"
 
 function lowerBound_cmp(array, value, compare, lo, hi) {
@@ -2107,6 +2103,20 @@ function lowerBound(array, value, compare, lo, hi) {
 }
 
 module.exports = lowerBound
+},{}],19:[function(require,module,exports){
+"use strict"
+
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
 },{}],20:[function(require,module,exports){
 "use strict"
 

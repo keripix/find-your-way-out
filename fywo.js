@@ -48,6 +48,7 @@ function Block(conf){
   this.color = conf.color;
   this.isMoving = false;
   this.requestRendering = false;
+  this.requestRenderingForce = false;
   this.moving = {amount: 0, value: 0, direction: 0};
 }
 
@@ -131,19 +132,25 @@ module.exports = {
 }
 },{}],4:[function(require,module,exports){
 function normalizeAfterCollision(actor, block, currentDistance){
-  var moving = actor.moving.direction,
-      side = moving === "x" ? "width" : "height";
-
-  var shouldDistance = Math.abs(actor[side]+block[side])/2,
-      diff = Math.round(shouldDistance) - Math.round(currentDistance);
-
-  if (diff !== 0){
-    // normalize
-    actor[moving] += diff;
-    actor.needsToRender = true;
+  if (!actor.hasOwnProperty("stopperLocation")){
+    detectStopper(actor, block);
   }
 
-  return actor;
+  var stopper = actor.stopperLocation,
+      dist = stopper === "x" ? block.width/2 : block.height/2,
+      delta = Math.round(currentDistance/2) - dist;
+
+  console.log(dist, delta);
+
+  if (delta !== 0){
+    console.log("currentDistance: " + currentDistance);
+    console.log("delta", block[actor.moving.direction], block["mid"+actor.moving.direction.toUpperCase()]);
+    console.log("delta", actor[actor.moving.direction], actor["mid"+actor.moving.direction.toUpperCase()]);
+    actor[actor.moving.direction] += delta;
+    actor["mid"+actor.moving.direction.toUpperCase()] += delta;
+    actor.requestRenderingForce = true;
+    console.log("delta", actor[actor.moving.direction], actor["mid"+actor.moving.direction.toUpperCase()]);
+  }
 }
 
 function detectStopper(actor, block){
@@ -177,8 +184,8 @@ module.exports = function(actor, blocks, exit, world){
 
       if (distanceSqr <= collisionDistanceSqr) {
         detectStopper(actor, b);
+        normalizeAfterCollision(actor, b, Math.sqrt(distanceSqr));
         actor.stop();
-        // actor = normalizeAfterCollision(actor, b, distanceSq);
       }
     }
   });
@@ -283,7 +290,7 @@ var ctx,
     canvas,
     canvasBackground,
     bkgCtx,
-    speed = 5,
+    speed = 10,
     actor,
     moveDirection = {};
 
@@ -365,17 +372,19 @@ shell.on("tick", function() {
 
 //Render a frame
 shell.on("render", function() {
-  if (!actor.requestRendering){
-    return;
+  if (actor.requestRenderingForce || actor.requestRendering){
+    if (actor.requestRenderingForce){
+      console.log("force");
+    }
+    actor.requestRenderingForce = false;
+    ctx.clearRect(actor.x, actor.y, actor.width, actor.height);
+
+    ctx.fillStyle = actor.color;
+    // eg actor.moveY
+    actor["move"+moveDirection.direction.toUpperCase()].call(actor, moveDirection.value);
+
+    ctx.fillRect(actor.x, actor.y, actor.width, actor.height);
   }
-
-  ctx.clearRect(actor.x, actor.y, actor.width, actor.height);
-
-  ctx.fillStyle = actor.color;
-  // eg actor.moveY
-  actor["move"+moveDirection.direction.toUpperCase()].call(actor, moveDirection.value);
-
-  ctx.fillRect(actor.x, actor.y, actor.width, actor.height);
 });
 
 
@@ -1802,7 +1811,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":10,"util":11,"./lib/mousewheel-polyfill.js":12,"./lib/raf-polyfill.js":13,"./lib/hrtime-polyfill.js":14,"domready":15,"vkey":16,"invert-hash":17,"uniq":18,"lower-bound":19,"iota-array":20}],15:[function(require,module,exports){
+},{"events":10,"util":11,"./lib/raf-polyfill.js":13,"./lib/mousewheel-polyfill.js":12,"./lib/hrtime-polyfill.js":14,"domready":15,"invert-hash":16,"vkey":17,"uniq":18,"lower-bound":19,"iota-array":20}],15:[function(require,module,exports){
 /*!
   * domready (c) Dustin Diaz 2012 - License MIT
   */
@@ -1858,6 +1867,20 @@ module.exports = createShell
     })
 })
 },{}],16:[function(require,module,exports){
+"use strict"
+
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
+},{}],17:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -1996,20 +2019,6 @@ for(i = 112; i < 136; ++i) {
 }
 
 })()
-},{}],17:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
 },{}],18:[function(require,module,exports){
 "use strict"
 

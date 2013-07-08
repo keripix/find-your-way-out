@@ -1,51 +1,41 @@
 var aware = require("./../lib/aware"),
-    actor = {
+    block = require("./../lib/block"),
+    actor = block.create({
       x: 10,
       y: 10,
-      midX: 15,
-      midY: 15,
       width: 10,
       height: 10,
       isMoving: true,
-      hasWon: false,
-      moving: {x: 5,y:0}
-    },
-    blocks = [{
+      hasWon: false
+    }),
+    blocks = [block.create({
       x: 50,
       y: 12,
-      midX: 55,
-      midY: 17,
       width: 10,
       height: 10
-    }],
-    exit = {
+    })],
+    exit = block.create({
       x: 100,
       y: 100,
-      midX: 105,
-      midY: 105,
       width: 10,
       height: 10
-    };
+    });
 
 describe("I'm aware", function(){
   beforeEach(function(){
-    actor = {
+    actor = block.create({
       x: 10,
       y: 10,
-      midX: 15,
-      midY: 15,
       width: 10,
       height: 10,
       isMoving: true,
-      hasWon: false,
-      moving: {x: 5,y:0}
-    };
+      hasWon: false
+    });
   });
 
   it("Should stop when the distance is to close", function(){
     for(var i=actor.x;i<=50;i+=5){
-      actor.x += 5;
-      actor.midX += 5;
+      actor.moveX(5);
       aware(actor, blocks, exit,{width:150,height:150});
     }
 
@@ -56,8 +46,7 @@ describe("I'm aware", function(){
     exit.y = 5;
     exit.midY = 10;
     for (var i=actor.x; i<=110;i+=5){
-      actor.x += 5;
-      actor.midX += 5;
+      actor.moveX(5);
       aware(actor, blocks, exit,{width:150,height:150});
     }
 
@@ -68,8 +57,7 @@ describe("I'm aware", function(){
     exit.x = 145;
     exit.y = 50;
     for (var i=actor.x; i<=160;i+=5){
-      actor.x += 5;
-      actor.midX += 5;
+      actor.moveX(5);
       aware(actor, blocks, {x: 145,y:50,midX:150,midY:55},{width:150,height:150});
     }
 
@@ -77,11 +65,8 @@ describe("I'm aware", function(){
   });
 
   it("Should normalize actor position after collision with block", function(){
-    actor.moving.x = 7;
-
-    for (var i = actor.x; i <= blocks[0].x; i+= actor.moving.x) {
-      actor.x += actor.moving.x;
-      actor.midX += actor.moving.x;
+    for (var i = actor.x; i <= blocks[0].x; i+= 7) {
+      actor.moveX(7);
       aware(actor, blocks, exit, {width: 150, height: 150});
     }
 

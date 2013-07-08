@@ -1,56 +1,4 @@
 ;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
-(function(){'use strict';
-
-function GameConfiguration(conf){
-  this.parseConf(conf);
-}
-
-GameConfiguration.prototype.parseConf = function(conf) {
-  if (!conf.world || !conf.levels){
-    throw new Error("Required params not provided");
-  }
-
-  this.world = conf.world;
-  this.levels = conf.levels;
-
-  // will set global configuration for each level if none is
-  // provided
-  this.levels.forEach(function(l){
-    l.actor.width = l.actor.width || conf.world.actor.width;
-    l.actor.height = l.actor.height || conf.world.actor.height;
-    l.actor.color = l.actor.color || conf.world.actor.color;
-
-    // set middle point
-    l.actor.midX = l.actor.x + (l.actor.width/2);
-    l.actor.midY = l.actor.y + (l.actor.height/2);
-
-    l.out.width = l.out.width || conf.world.out.width;
-    l.out.height = l.out.height || conf.world.out.height;
-    l.out.color = l.out.color || conf.world.out.color;
-
-    l.out.midX = l.out.x + (l.out.width/2);
-    l.out.midY = l.out.y + (l.out.height/2);
-
-    l.blocks.forEach(function(b){
-      b.width = b.width || conf.world.blocks.width;
-      b.height = b.height || conf.world.blocks.height;
-      b.color = b.color || conf.world.blocks.color;
-
-      b.midX = b.x + (b.width/2);
-      b.midY = b.y + (b.height/2);
-    });
-  });
-};
-
-GameConfiguration.prototype.getLevel = function(level) {
-  return this.levels[level-1];
-};
-
-exports.init = function(conf){
-  return new GameConfiguration(conf)
-}
-})()
-},{}],2:[function(require,module,exports){
 'use strict';
 
 exports.parsePosition = function(position){
@@ -85,7 +33,7 @@ exports.generate = function(canvas, position){
 
   return canvas;
 };
-},{}],3:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 module.exports = {
   world: {
     width: 600,
@@ -142,7 +90,7 @@ module.exports = {
     }
   ]
 }
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 function normalizeAfterCollision(actor, block, currentDistance){
   var moving = "x",
       side = "width";
@@ -202,7 +150,69 @@ module.exports = function(actor, blocks, exit, world){
     }
   });
 };
-},{}],5:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
+(function(){'use strict';
+
+var block = require("./block");
+
+function GameConfiguration(conf){
+  this.parseConf(conf);
+}
+
+GameConfiguration.prototype.parseConf = function(conf) {
+  if (!conf.world || !conf.levels){
+    throw new Error("Required params not provided");
+  }
+
+  this.world = conf.world;
+  this.levels = [];
+
+  // will set global configuration for each level if none is
+  // provided
+  conf.levels.forEach(function(l){
+    var newLevel = {};
+
+    newLevel.actor = block.create({
+      x: l.actor.x,
+      y: l.actor.y,
+      width: l.actor.width || conf.world.actor.width,
+      height: l.actor.height || conf.world.actor.height,
+      color: l.actor.color || conf.world.actor.color
+    });
+
+    newLevel.out = block.create({
+      x: l.out.x,
+      y: l.out.y,
+      width: l.out.width || conf.world.out.width,
+      height: l.out.height || conf.world.out.height,
+      color: l.out.color || conf.world.out.color
+    });
+
+    newLevel.blocks = [];
+
+    l.blocks.forEach(function(b){
+      newLevel.blocks.push(block.create({
+        x: b.x,
+        y: b.y,
+        width: b.width || conf.world.blocks.width,
+        height: b.height || conf.world.blocks.height,
+        color: b.color || conf.world.blocks.color
+      }));
+    });
+
+    this.levels.push(newLevel);
+  }.bind(this));
+};
+
+GameConfiguration.prototype.getLevel = function(level) {
+  return this.levels[level-1];
+};
+
+exports.init = function(conf){
+  return new GameConfiguration(conf)
+}
+})()
+},{"./block":5}],6:[function(require,module,exports){
 /*
  * find-your-way-out
  * https://github.com/keripix/find-your-way-out
@@ -354,7 +364,35 @@ shell.on("render", function() {
 
 
 
-},{"./gameConfiguration":1,"./worldGenerator":2,"../conf/game":3,"./aware":4,"game-shell":6}],7:[function(require,module,exports){
+},{"./gameConfiguration":4,"./worldGenerator":1,"../conf/game":2,"./aware":3,"game-shell":7}],5:[function(require,module,exports){
+exports.create = function(conf){
+  return new Block(conf);
+};
+
+function Block(conf){
+  this.x = conf.x;
+  this.y = conf.y;
+  this.width = conf.width;
+  this.height = conf.height;
+  this.midX = this.x + (this.width/2);
+  this.midY = this.y + (this.height/2);
+  this.color = conf.color;
+  this.isMoving = false;
+  this.requestRendering = false;
+}
+
+Block.prototype.moveX = function(value) {
+  this.moving = {direction: "x", value: value};
+  this.x += value;
+  this.midX += value;
+};
+
+Block.prototype.moveY = function(value) {
+  this.moving = {direction: "y", value: value};
+  this.y += value;
+  this.midY += value;
+};
+},{}],8:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -408,7 +446,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 (function(process){if (!process.EventEmitter) process.EventEmitter = function () {};
 
 var EventEmitter = exports.EventEmitter = process.EventEmitter;
@@ -594,7 +632,7 @@ EventEmitter.prototype.listeners = function(type) {
 };
 
 })(require("__browserify_process"))
-},{"__browserify_process":7}],9:[function(require,module,exports){
+},{"__browserify_process":8}],10:[function(require,module,exports){
 var events = require('events');
 
 exports.isArray = isArray;
@@ -947,7 +985,7 @@ exports.format = function(f) {
   return str;
 };
 
-},{"events":8}],10:[function(require,module,exports){
+},{"events":9}],11:[function(require,module,exports){
 // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
  
@@ -977,7 +1015,7 @@ if (!window.cancelAnimationFrame)
         clearTimeout(id);
     };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 //Adapted from here: https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel?redirectlocale=en-US&redirectslug=DOM%2FMozilla_event_reference%2Fwheel
 
 var prefix = "", _addEventListener, onwheel, support;
@@ -1037,7 +1075,7 @@ module.exports = function( elem, callback, useCapture ) {
     _addWheelListener( elem, "MozMousePixelScroll", callback, useCapture );
   }
 };
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 if(window.performance.now) {
   module.exports = function() { return window.performance.now() }
 } else if(window.performance.webktiNow) {
@@ -1047,7 +1085,7 @@ if(window.performance.now) {
 } else {
   module.exports = function() { return (new Date()).getTime() }
 }
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict"
 
 var EventEmitter = require("events").EventEmitter
@@ -1763,7 +1801,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"domready":13,"vkey":14,"invert-hash":15,"uniq":16,"lower-bound":17,"iota-array":18}],13:[function(require,module,exports){
+},{"events":9,"util":10,"./lib/raf-polyfill.js":11,"./lib/mousewheel-polyfill.js":12,"./lib/hrtime-polyfill.js":13,"domready":14,"vkey":15,"invert-hash":16,"uniq":17,"lower-bound":18,"iota-array":19}],14:[function(require,module,exports){
 /*!
   * domready (c) Dustin Diaz 2012 - License MIT
   */
@@ -1818,7 +1856,21 @@ module.exports = createShell
       loaded ? fn() : fns.push(fn)
     })
 })
-},{}],14:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
+"use strict"
+
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
+},{}],15:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -1957,21 +2009,7 @@ for(i = 112; i < 136; ++i) {
 }
 
 })()
-},{}],15:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict"
 
 function unique_pred(list, compare) {
@@ -2029,7 +2067,7 @@ function unique(list, compare, sorted) {
 }
 
 module.exports = unique
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict"
 
 function lowerBound_cmp(array, value, compare, lo, hi) {
@@ -2085,7 +2123,7 @@ function lowerBound(array, value, compare, lo, hi) {
 }
 
 module.exports = lowerBound
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict"
 
 function iota(n) {
@@ -2097,5 +2135,5 @@ function iota(n) {
 }
 
 module.exports = iota
-},{}]},{},[5])
+},{}]},{},[6])
 ;

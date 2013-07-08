@@ -61,7 +61,7 @@ Block.prototype.moveX = function(value) {
 };
 
 Block.prototype.moveY = function(value) {
-  this.moving = {amount: value + "y", value: value, direction: "y"};
+  this.moving = {value: value, direction: "y"};
   this.y += value;
   this.midY += value;
   this.isMoving = true;
@@ -140,16 +140,16 @@ function normalizeAfterCollision(actor, block, currentDistance){
       dist = stopper === "x" ? block.width/2 : block.height/2,
       delta = Math.round(currentDistance/2) - dist;
 
-  console.log(dist, delta);
+  // console.log(dist, delta);
 
   if (delta !== 0){
-    console.log("currentDistance: " + currentDistance);
-    console.log("delta", block[actor.moving.direction], block["mid"+actor.moving.direction.toUpperCase()]);
-    console.log("delta", actor[actor.moving.direction], actor["mid"+actor.moving.direction.toUpperCase()]);
+    // console.log("currentDistance: " + currentDistance);
+    // console.log("delta", block[actor.moving.direction], block["mid"+actor.moving.direction.toUpperCase()]);
+    // console.log("delta", actor[actor.moving.direction], actor["mid"+actor.moving.direction.toUpperCase()]);
     actor[actor.moving.direction] += delta;
     actor["mid"+actor.moving.direction.toUpperCase()] += delta;
     actor.requestRenderingForce = true;
-    console.log("delta", actor[actor.moving.direction], actor["mid"+actor.moving.direction.toUpperCase()]);
+    // console.log("delta", actor[actor.moving.direction], actor["mid"+actor.moving.direction.toUpperCase()]);
   }
 }
 
@@ -996,6 +996,46 @@ exports.create = function(conf){
   return actor;
 };
 },{"./block":2}],12:[function(require,module,exports){
+// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+ 
+// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+ 
+// MIT license
+var lastTime = 0;
+var vendors = ['ms', 'moz', 'webkit', 'o'];
+for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+                               || window[vendors[x]+'CancelRequestAnimationFrame'];
+}
+
+if (!window.requestAnimationFrame)
+    window.requestAnimationFrame = function(callback, element) {
+        var currTime = new Date().getTime();
+        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+        var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+          timeToCall);
+        lastTime = currTime + timeToCall;
+        return id;
+    };
+
+if (!window.cancelAnimationFrame)
+    window.cancelAnimationFrame = function(id) {
+        clearTimeout(id);
+    };
+
+},{}],13:[function(require,module,exports){
+if(window.performance.now) {
+  module.exports = function() { return window.performance.now() }
+} else if(window.performance.webktiNow) {
+  module.exports = function() { return window.performance.webkitNow() }
+} else if(Date.now) {
+  module.exports = Date.now
+} else {
+  module.exports = function() { return (new Date()).getTime() }
+}
+},{}],14:[function(require,module,exports){
 //Adapted from here: https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel?redirectlocale=en-US&redirectslug=DOM%2FMozilla_event_reference%2Fwheel
 
 var prefix = "", _addEventListener, onwheel, support;
@@ -1055,46 +1095,6 @@ module.exports = function( elem, callback, useCapture ) {
     _addWheelListener( elem, "MozMousePixelScroll", callback, useCapture );
   }
 };
-},{}],13:[function(require,module,exports){
-// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
- 
-// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
- 
-// MIT license
-var lastTime = 0;
-var vendors = ['ms', 'moz', 'webkit', 'o'];
-for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
-                               || window[vendors[x]+'CancelRequestAnimationFrame'];
-}
-
-if (!window.requestAnimationFrame)
-    window.requestAnimationFrame = function(callback, element) {
-        var currTime = new Date().getTime();
-        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-        var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
-          timeToCall);
-        lastTime = currTime + timeToCall;
-        return id;
-    };
-
-if (!window.cancelAnimationFrame)
-    window.cancelAnimationFrame = function(id) {
-        clearTimeout(id);
-    };
-
-},{}],14:[function(require,module,exports){
-if(window.performance.now) {
-  module.exports = function() { return window.performance.now() }
-} else if(window.performance.webktiNow) {
-  module.exports = function() { return window.performance.webkitNow() }
-} else if(Date.now) {
-  module.exports = Date.now
-} else {
-  module.exports = function() { return (new Date()).getTime() }
-}
 },{}],8:[function(require,module,exports){
 "use strict"
 
@@ -1811,7 +1811,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":10,"util":11,"./lib/raf-polyfill.js":13,"./lib/mousewheel-polyfill.js":12,"./lib/hrtime-polyfill.js":14,"domready":15,"invert-hash":16,"vkey":17,"uniq":18,"lower-bound":19,"iota-array":20}],15:[function(require,module,exports){
+},{"events":10,"util":11,"./lib/raf-polyfill.js":12,"./lib/mousewheel-polyfill.js":14,"./lib/hrtime-polyfill.js":13,"domready":15,"vkey":16,"invert-hash":17,"lower-bound":18,"uniq":19,"iota-array":20}],15:[function(require,module,exports){
 /*!
   * domready (c) Dustin Diaz 2012 - License MIT
   */
@@ -1867,20 +1867,6 @@ module.exports = createShell
     })
 })
 },{}],16:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
-},{}],17:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -2019,7 +2005,77 @@ for(i = 112; i < 136; ++i) {
 }
 
 })()
+},{}],17:[function(require,module,exports){
+"use strict"
+
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
 },{}],18:[function(require,module,exports){
+"use strict"
+
+function lowerBound_cmp(array, value, compare, lo, hi) {
+  lo = lo|0
+  hi = hi|0
+  while(lo < hi) {
+    var m = (lo + hi) >>> 1
+      , v = compare(value, array[m])
+    if(v < 0) {
+      hi = m-1
+    } else if(v > 0) {
+      lo = m+1
+    } else {
+      hi = m
+    }
+  }
+  if(compare(array[lo], value) <= 0) {
+    return lo
+  }
+  return lo - 1
+}
+
+function lowerBound_def(array, value, lo, hi) {
+  lo = lo|0
+  hi = hi|0
+  while(lo < hi) {
+    var m = (lo + hi) >>> 1
+    if(value < array[m]) {
+      hi = m-1
+    } else if(value > array[m]) {
+      lo = m+1
+    } else {
+      hi = m
+    }
+  }
+  if(array[lo] <= value) {
+    return lo
+  }
+  return lo - 1
+}
+
+function lowerBound(array, value, compare, lo, hi) {
+  if(!lo) {
+    lo = 0
+  }
+  if(typeof(hi) !== "number") {
+    hi = array.length-1
+  }
+  if(compare) {
+    return lowerBound_cmp(array, value, compare, lo, hi)
+  }
+  return lowerBound_def(array, value, lo, hi)
+}
+
+module.exports = lowerBound
+},{}],19:[function(require,module,exports){
 "use strict"
 
 function unique_pred(list, compare) {
@@ -2077,62 +2133,6 @@ function unique(list, compare, sorted) {
 }
 
 module.exports = unique
-},{}],19:[function(require,module,exports){
-"use strict"
-
-function lowerBound_cmp(array, value, compare, lo, hi) {
-  lo = lo|0
-  hi = hi|0
-  while(lo < hi) {
-    var m = (lo + hi) >>> 1
-      , v = compare(value, array[m])
-    if(v < 0) {
-      hi = m-1
-    } else if(v > 0) {
-      lo = m+1
-    } else {
-      hi = m
-    }
-  }
-  if(compare(array[lo], value) <= 0) {
-    return lo
-  }
-  return lo - 1
-}
-
-function lowerBound_def(array, value, lo, hi) {
-  lo = lo|0
-  hi = hi|0
-  while(lo < hi) {
-    var m = (lo + hi) >>> 1
-    if(value < array[m]) {
-      hi = m-1
-    } else if(value > array[m]) {
-      lo = m+1
-    } else {
-      hi = m
-    }
-  }
-  if(array[lo] <= value) {
-    return lo
-  }
-  return lo - 1
-}
-
-function lowerBound(array, value, compare, lo, hi) {
-  if(!lo) {
-    lo = 0
-  }
-  if(typeof(hi) !== "number") {
-    hi = array.length-1
-  }
-  if(compare) {
-    return lowerBound_cmp(array, value, compare, lo, hi)
-  }
-  return lowerBound_def(array, value, lo, hi)
-}
-
-module.exports = lowerBound
 },{}],20:[function(require,module,exports){
 "use strict"
 

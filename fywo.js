@@ -28,6 +28,9 @@ GameConfiguration.prototype.parseConf = function(conf) {
     l.out.height = l.out.height || conf.world.out.height;
     l.out.color = l.out.color || conf.world.out.color;
 
+    l.out.midX = l.out.x + (l.out.width/2);
+    l.out.midY = l.out.y + (l.out.height/2);
+
     l.blocks.forEach(function(b){
       b.width = b.width || conf.world.blocks.width;
       b.height = b.height || conf.world.blocks.height;
@@ -165,9 +168,7 @@ module.exports = function(actor, blocks, exit, world){
   var check = "x",
       moving = "y",
       bound = actor.height,
-      collisionAxis = "height",
-      midActor = {x: actor.x + (actor.width/2), y: actor.y + (actor.height/2)},
-      midExit = {x: exit.x + (exit.width/2), y: exit.y + (exit.height/2)};
+      collisionAxis = "height";
 
   if (actor.moving.x !== 0) {
     check = "y";
@@ -177,7 +178,7 @@ module.exports = function(actor, blocks, exit, world){
   }
 
   // check the distance between the actor and the exit door
-  if (Math.sqrt(Math.pow(midActor.x-midExit.x,2)+Math.pow(midActor.y-midExit.y,2)) <= ((actor[collisionAxis]+exit[collisionAxis])/2)){
+  if (Math.sqrt(Math.pow(actor.midX-exit.midX,2)+Math.pow(actor.midY-exit.midY,2)) <= ((actor[collisionAxis]+exit[collisionAxis])/2)){
     actor.isMoving = false;
     actor.hasWon = true;
     return;
@@ -191,8 +192,7 @@ module.exports = function(actor, blocks, exit, world){
   blocks.forEach(function(b){
     if (b[check] <= (actor[check] + bound) && b[check] >= (actor[check] - bound)) {
 
-      var midBlock = {x: b.x + (b.width/2), y: b.y + (b.height/2)},
-          distanceSqr = Math.pow(midActor.x-midBlock.x,2)+Math.pow(midActor.y-midBlock.y,2),
+      var distanceSqr = Math.pow(actor.midX-b.midX,2)+Math.pow(actor.midY-b.midY, 2),
           collisionDistanceSqr = Math.pow((actor[collisionAxis] + b[collisionAxis])/2, 2);
 
       if (distanceSqr <= collisionDistanceSqr) {
@@ -224,6 +224,8 @@ var ctx,
     actor = { // TODO not beautifull
       x: 0,
       y: 0,
+      midX: 0,
+      midY: 0,
       width: 0,
       height: 0,
       moving: {x: 0, y: 0},
@@ -262,6 +264,8 @@ function startLevel(){
   // TODO not beautifull
   actor.x = gameLevel.actor.x;
   actor.y = gameLevel.actor.y;
+  actor.midX = gameLevel.actor.midX;
+  actor.midY = gameLevel.actor.midY;
   actor.moving = {x: 0, y: 0},
   actor.width = gameLevel.actor.width;
   actor.height = gameLevel.actor.height;
@@ -341,6 +345,8 @@ shell.on("render", function() {
   ctx.fillStyle = actor.color;
   actor.x += actor.moving.x;
   actor.y += actor.moving.y;
+  actor.midX += actor.moving.x;
+  actor.midY += actor.moving.y;
 
   ctx.fillRect(actor.x, actor.y, actor.width, actor.height);
 });
@@ -972,6 +978,16 @@ if (!window.cancelAnimationFrame)
     };
 
 },{}],11:[function(require,module,exports){
+if(window.performance.now) {
+  module.exports = function() { return window.performance.now() }
+} else if(window.performance.webktiNow) {
+  module.exports = function() { return window.performance.webkitNow() }
+} else if(Date.now) {
+  module.exports = Date.now
+} else {
+  module.exports = function() { return (new Date()).getTime() }
+}
+},{}],12:[function(require,module,exports){
 //Adapted from here: https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel?redirectlocale=en-US&redirectslug=DOM%2FMozilla_event_reference%2Fwheel
 
 var prefix = "", _addEventListener, onwheel, support;
@@ -1031,16 +1047,6 @@ module.exports = function( elem, callback, useCapture ) {
     _addWheelListener( elem, "MozMousePixelScroll", callback, useCapture );
   }
 };
-},{}],12:[function(require,module,exports){
-if(window.performance.now) {
-  module.exports = function() { return window.performance.now() }
-} else if(window.performance.webktiNow) {
-  module.exports = function() { return window.performance.webkitNow() }
-} else if(Date.now) {
-  module.exports = Date.now
-} else {
-  module.exports = function() { return (new Date()).getTime() }
-}
 },{}],6:[function(require,module,exports){
 "use strict"
 
@@ -1757,7 +1763,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"domready":13,"invert-hash":14,"uniq":15,"vkey":16,"lower-bound":17,"iota-array":18}],13:[function(require,module,exports){
+},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/hrtime-polyfill.js":11,"./lib/mousewheel-polyfill.js":12,"domready":13,"vkey":14,"invert-hash":15,"uniq":16,"lower-bound":17,"iota-array":18}],13:[function(require,module,exports){
 /*!
   * domready (c) Dustin Diaz 2012 - License MIT
   */
@@ -1813,20 +1819,6 @@ module.exports = createShell
     })
 })
 },{}],14:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
-},{}],16:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -1968,61 +1960,17 @@ for(i = 112; i < 136; ++i) {
 },{}],15:[function(require,module,exports){
 "use strict"
 
-function unique_pred(list, compare) {
-  var ptr = 1
-    , len = list.length
-    , a=list[0], b=list[0]
-  for(var i=1; i<len; ++i) {
-    b = a
-    a = list[i]
-    if(compare(a, b)) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      list[ptr++] = a
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
     }
   }
-  list.length = ptr
-  return list
+  return result
 }
 
-function unique_eq(list) {
-  var ptr = 1
-    , len = list.length
-    , a=list[0], b = list[0]
-  for(var i=1; i<len; ++i, b=a) {
-    b = a
-    a = list[i]
-    if(a !== b) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      list[ptr++] = a
-    }
-  }
-  list.length = ptr
-  return list
-}
-
-function unique(list, compare, sorted) {
-  if(list.length === 0) {
-    return []
-  }
-  if(compare) {
-    if(!sorted) {
-      list.sort(compare)
-    }
-    return unique_pred(list, compare)
-  }
-  if(!sorted) {
-    list.sort()
-  }
-  return unique_eq(list)
-}
-
-module.exports = unique
+module.exports = invert
 },{}],17:[function(require,module,exports){
 "use strict"
 
@@ -2091,5 +2039,63 @@ function iota(n) {
 }
 
 module.exports = iota
+},{}],16:[function(require,module,exports){
+"use strict"
+
+function unique_pred(list, compare) {
+  var ptr = 1
+    , len = list.length
+    , a=list[0], b=list[0]
+  for(var i=1; i<len; ++i) {
+    b = a
+    a = list[i]
+    if(compare(a, b)) {
+      if(i === ptr) {
+        ptr++
+        continue
+      }
+      list[ptr++] = a
+    }
+  }
+  list.length = ptr
+  return list
+}
+
+function unique_eq(list) {
+  var ptr = 1
+    , len = list.length
+    , a=list[0], b = list[0]
+  for(var i=1; i<len; ++i, b=a) {
+    b = a
+    a = list[i]
+    if(a !== b) {
+      if(i === ptr) {
+        ptr++
+        continue
+      }
+      list[ptr++] = a
+    }
+  }
+  list.length = ptr
+  return list
+}
+
+function unique(list, compare, sorted) {
+  if(list.length === 0) {
+    return []
+  }
+  if(compare) {
+    if(!sorted) {
+      list.sort(compare)
+    }
+    return unique_pred(list, compare)
+  }
+  if(!sorted) {
+    list.sort()
+  }
+  return unique_eq(list)
+}
+
+module.exports = unique
 },{}]},{},[5])
 ;

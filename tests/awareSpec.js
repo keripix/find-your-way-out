@@ -2,6 +2,8 @@ var aware = require("./../lib/aware"),
     actor = {
       x: 10,
       y: 10,
+      midX: 15,
+      midY: 15,
       width: 10,
       height: 10,
       isMoving: true,
@@ -11,12 +13,16 @@ var aware = require("./../lib/aware"),
     blocks = [{
       x: 50,
       y: 12,
+      midX: 55,
+      midY: 17,
       width: 10,
       height: 10
     }],
     exit = {
       x: 100,
       y: 100,
+      midX: 105,
+      midY: 105,
       width: 10,
       height: 10
     };
@@ -26,6 +32,8 @@ describe("I'm aware", function(){
     actor = {
       x: 10,
       y: 10,
+      midX: 15,
+      midY: 15,
       width: 10,
       height: 10,
       isMoving: true,
@@ -33,9 +41,11 @@ describe("I'm aware", function(){
       moving: {x: 5,y:0}
     };
   });
+
   it("Should stop when the distance is to close", function(){
     for(var i=actor.x;i<=50;i+=5){
       actor.x += 5;
+      actor.midX += 5;
       aware(actor, blocks, exit,{width:150,height:150});
     }
 
@@ -44,8 +54,10 @@ describe("I'm aware", function(){
 
   it("Should only win if the actor has made a contact with the exit box", function(){
     exit.y = 5;
+    exit.midY = 10;
     for (var i=actor.x; i<=110;i+=5){
       actor.x += 5;
+      actor.midX += 5;
       aware(actor, blocks, exit,{width:150,height:150});
     }
 
@@ -57,7 +69,8 @@ describe("I'm aware", function(){
     exit.y = 50;
     for (var i=actor.x; i<=160;i+=5){
       actor.x += 5;
-      aware(actor, blocks, {x: 145,y:50},{width:150,height:150});
+      actor.midX += 5;
+      aware(actor, blocks, {x: 145,y:50,midX:150,midY:55},{width:150,height:150});
     }
 
     expect(actor.hasLost).toBeTruthy();
@@ -68,6 +81,7 @@ describe("I'm aware", function(){
 
     for (var i = actor.x; i <= blocks[0].x; i+= actor.moving.x) {
       actor.x += actor.moving.x;
+      actor.midX += actor.moving.x;
       aware(actor, blocks, exit, {width: 150, height: 150});
     }
 

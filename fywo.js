@@ -1,4 +1,39 @@
 ;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
+'use strict';
+
+exports.parsePosition = function(position){
+  var results = [];
+
+  // if this is not an array, then make it an array
+  if (toString.call(position) != '[object Array]'){
+    position = [position];
+  }
+
+  position.forEach(function(pos){
+    results.push({
+      x: pos.x || 0,
+      y: pos.y || 0,
+      width: pos.width || 10,
+      height: pos.height || 10,
+      color: pos.color || "#000000"
+    });
+  });
+
+  return results;
+};
+
+exports.generate = function(canvas, position){
+  var points = this.parsePosition(position),
+      ctx = canvas.getContext('2d');
+
+  points.forEach(function(p){
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x, p.y, p.width, p.height);
+  });
+
+  return canvas;
+};
+},{}],2:[function(require,module,exports){
 exports.create = function(conf){
   return new Block(conf);
 };
@@ -36,41 +71,6 @@ Block.prototype.stop = function() {
   this.moving = {amount: 0, value: 0, direction: 0};
   this.isMoving = false;
   this.requestRendering = false;
-};
-},{}],2:[function(require,module,exports){
-'use strict';
-
-exports.parsePosition = function(position){
-  var results = [];
-
-  // if this is not an array, then make it an array
-  if (toString.call(position) != '[object Array]'){
-    position = [position];
-  }
-
-  position.forEach(function(pos){
-    results.push({
-      x: pos.x || 0,
-      y: pos.y || 0,
-      width: pos.width || 10,
-      height: pos.height || 10,
-      color: pos.color || "#000000"
-    });
-  });
-
-  return results;
-};
-
-exports.generate = function(canvas, position){
-  var points = this.parsePosition(position),
-      ctx = canvas.getContext('2d');
-
-  points.forEach(function(p){
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x, p.y, p.width, p.height);
-  });
-
-  return canvas;
 };
 },{}],3:[function(require,module,exports){
 module.exports = {
@@ -146,6 +146,10 @@ function normalizeAfterCollision(actor, block, currentDistance){
   return actor;
 }
 
+function detectStopper(actor, block){
+  actor.stopperLocation = actor.moving.value >= 0 ? actor.moving.direction : "-" + actor.moving.direction;
+}
+
 module.exports = function(actor, blocks, exit, world){
   var moving = actor.moving.direction,
       check = moving === "x" ? "y" : "x",
@@ -172,8 +176,9 @@ module.exports = function(actor, blocks, exit, world){
           collisionDistanceSqr = Math.pow((actor[collisionAxis] + b[collisionAxis])/2, 2);
 
       if (distanceSqr <= collisionDistanceSqr) {
+        detectStopper(actor, b);
         actor.stop();
-        // actor = normalizeAfterCollision(actor, b, distance);
+        // actor = normalizeAfterCollision(actor, b, distanceSq);
       }
     }
   });
@@ -253,7 +258,7 @@ exports.init = function(conf){
   return new GameConfiguration(conf);
 };
 })()
-},{"./actor":6,"./block":1}],7:[function(require,module,exports){
+},{"./block":2,"./actor":6}],7:[function(require,module,exports){
 /*
  * find-your-way-out
  * https://github.com/keripix/find-your-way-out
@@ -303,6 +308,7 @@ function startLevel(){
   }
 
   actor = game.createActor(currentLevel);
+  actor.stopperLocation = undefined;
 
   worldGenerator.generate(canvas, actor);
   worldGenerator.generate(canvasBackground, gameLevel.blocks);
@@ -342,16 +348,16 @@ shell.on("tick", function() {
     return;
   }
 
-  if(shell.wasDown("move-left") && actor.moving.amount !== -speed+"x") {
+  if(shell.wasDown("move-left") && actor.stopperLocation !== "-x") {
     moveDirection = {direction: "x", value: -speed};
     actor.requestRendering = true;
-  } else if(shell.wasDown("move-right") && actor.moving.value !== speed+"x") {
+  } else if(shell.wasDown("move-right") && actor.stopperLocation !== "x") {
     moveDirection = {direction: "x", value: speed};
     actor.requestRendering = true;
-  } else if(shell.wasDown("move-up") && actor.moving.value !== -speed+"y") {
+  } else if(shell.wasDown("move-up") && actor.stopperLocation !== "-y") {
     moveDirection = {direction: "y", value: -speed};
     actor.requestRendering = true;
-  } else if(shell.wasDown("move-down") && actor.moving.value !== speed+"y") {
+  } else if(shell.wasDown("move-down") && actor.stopperLocation !== "y") {
     moveDirection = {direction: "y", value: speed};
     actor.requestRendering = true;
   }
@@ -375,7 +381,7 @@ shell.on("render", function() {
 
 
 
-},{"./gameConfiguration":5,"./worldGenerator":2,"./block":1,"../conf/game":3,"./aware":4,"game-shell":8}],9:[function(require,module,exports){
+},{"./gameConfiguration":5,"./worldGenerator":1,"./block":2,"../conf/game":3,"./aware":4,"game-shell":8}],9:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -976,40 +982,11 @@ exports.create = function(conf){
 
   actor.hasWon = false;
   actor.hasLost = false;
+  actor.blockedFrom = undefined;
 
   return actor;
 };
-},{"./block":1}],12:[function(require,module,exports){
-// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
- 
-// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
- 
-// MIT license
-var lastTime = 0;
-var vendors = ['ms', 'moz', 'webkit', 'o'];
-for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
-                               || window[vendors[x]+'CancelRequestAnimationFrame'];
-}
-
-if (!window.requestAnimationFrame)
-    window.requestAnimationFrame = function(callback, element) {
-        var currTime = new Date().getTime();
-        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-        var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
-          timeToCall);
-        lastTime = currTime + timeToCall;
-        return id;
-    };
-
-if (!window.cancelAnimationFrame)
-    window.cancelAnimationFrame = function(id) {
-        clearTimeout(id);
-    };
-
-},{}],13:[function(require,module,exports){
+},{"./block":2}],12:[function(require,module,exports){
 //Adapted from here: https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel?redirectlocale=en-US&redirectslug=DOM%2FMozilla_event_reference%2Fwheel
 
 var prefix = "", _addEventListener, onwheel, support;
@@ -1069,6 +1046,36 @@ module.exports = function( elem, callback, useCapture ) {
     _addWheelListener( elem, "MozMousePixelScroll", callback, useCapture );
   }
 };
+},{}],13:[function(require,module,exports){
+// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+ 
+// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+ 
+// MIT license
+var lastTime = 0;
+var vendors = ['ms', 'moz', 'webkit', 'o'];
+for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+                               || window[vendors[x]+'CancelRequestAnimationFrame'];
+}
+
+if (!window.requestAnimationFrame)
+    window.requestAnimationFrame = function(callback, element) {
+        var currTime = new Date().getTime();
+        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+        var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+          timeToCall);
+        lastTime = currTime + timeToCall;
+        return id;
+    };
+
+if (!window.cancelAnimationFrame)
+    window.cancelAnimationFrame = function(id) {
+        clearTimeout(id);
+    };
+
 },{}],14:[function(require,module,exports){
 if(window.performance.now) {
   module.exports = function() { return window.performance.now() }
@@ -1795,7 +1802,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":10,"util":11,"./lib/raf-polyfill.js":12,"./lib/mousewheel-polyfill.js":13,"./lib/hrtime-polyfill.js":14,"domready":15,"vkey":16,"uniq":17,"lower-bound":18,"invert-hash":19,"iota-array":20}],15:[function(require,module,exports){
+},{"events":10,"util":11,"./lib/mousewheel-polyfill.js":12,"./lib/raf-polyfill.js":13,"./lib/hrtime-polyfill.js":14,"domready":15,"vkey":16,"invert-hash":17,"uniq":18,"lower-bound":19,"iota-array":20}],15:[function(require,module,exports){
 /*!
   * domready (c) Dustin Diaz 2012 - License MIT
   */
@@ -1992,6 +1999,20 @@ for(i = 112; i < 136; ++i) {
 },{}],17:[function(require,module,exports){
 "use strict"
 
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
+},{}],18:[function(require,module,exports){
+"use strict"
+
 function unique_pred(list, compare) {
   var ptr = 1
     , len = list.length
@@ -2047,7 +2068,7 @@ function unique(list, compare, sorted) {
 }
 
 module.exports = unique
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict"
 
 function lowerBound_cmp(array, value, compare, lo, hi) {
@@ -2103,20 +2124,6 @@ function lowerBound(array, value, compare, lo, hi) {
 }
 
 module.exports = lowerBound
-},{}],19:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
 },{}],20:[function(require,module,exports){
 "use strict"
 

@@ -64,13 +64,23 @@ describe("I'm aware", function(){
     expect(actor.hasLost).toBeTruthy();
   });
 
-  it("Should normalize actor position after collision with block", function(){
-    for (var i = actor.x; i <= blocks[0].x; i+= 7) {
-      actor.moveX(7);
-      aware(actor, blocks, exit, {width: 150, height: 150});
+  // it("Should normalize actor position after collision with block", function(){
+  //   for (var i = actor.x; i <= blocks[0].x; i+= 7) {
+  //     actor.moveX(7);
+  //     aware(actor, blocks, exit, {width: 150, height: 150});
+  //   }
+
+  //   expect(actor.isMoving).toBeFalsy();
+  //   expect(actor.x).toEqual(60);
+  // });
+  //
+  it("Should be able to detect where the stopper's location is", function(){
+    for(var i=actor.x;i<=50;i+=5){
+      actor.moveX(5);
+      aware(actor, blocks, exit,{width:150,height:150});
     }
 
     expect(actor.isMoving).toBeFalsy();
-    expect(actor.x).toEqual(60);
+    expect(actor.stopperLocation).toEqual("x");
   });
 });

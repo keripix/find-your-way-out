@@ -20,6 +20,10 @@ GameConfiguration.prototype.parseConf = function(conf) {
     l.actor.height = l.actor.height || conf.world.actor.height;
     l.actor.color = l.actor.color || conf.world.actor.color;
 
+    // set middle point
+    l.actor.midX = l.actor.x + (l.actor.width/2);
+    l.actor.midY = l.actor.y + (l.actor.height/2);
+
     l.out.width = l.out.width || conf.world.out.width;
     l.out.height = l.out.height || conf.world.out.height;
     l.out.color = l.out.color || conf.world.out.color;
@@ -28,6 +32,9 @@ GameConfiguration.prototype.parseConf = function(conf) {
       b.width = b.width || conf.world.blocks.width;
       b.height = b.height || conf.world.blocks.height;
       b.color = b.color || conf.world.blocks.color;
+
+      b.midX = b.x + (b.width/2);
+      b.midY = b.y + (b.height/2);
     });
   });
 };
@@ -117,7 +124,9 @@ module.exports = {
       {x: 10, y: 50},
       {x: 20, y: 500},
       {x: 300, y: 400},
-      {x: 490, y: 110}
+      {x: 150, y: 410},
+      {x: 160, y: 290},
+      {x: 500, y: 500}
       ],
       actor: {
         x: 300,
@@ -131,6 +140,27 @@ module.exports = {
   ]
 }
 },{}],4:[function(require,module,exports){
+function normalizeAfterCollision(actor, block, currentDistance){
+  var moving = "x",
+      side = "width";
+
+  if (actor.moving.x === 0){
+    moving = "y";
+    side = "height";
+  }
+
+  var shouldDistance = Math.abs(actor[side]+block[side])/2,
+      diff = Math.round(shouldDistance) - Math.round(currentDistance);
+
+  if (diff !== 0){
+    // normalize
+    actor[moving] += diff;
+    actor.needsToRender = true;
+  }
+
+  return actor;
+}
+
 module.exports = function(actor, blocks, exit, world){
   var check = "x",
       moving = "y",
@@ -162,11 +192,12 @@ module.exports = function(actor, blocks, exit, world){
     if (b[check] <= (actor[check] + bound) && b[check] >= (actor[check] - bound)) {
 
       var midBlock = {x: b.x + (b.width/2), y: b.y + (b.height/2)},
-          distance = Math.sqrt(Math.pow(midActor.x-midBlock.x,2)+Math.pow(midActor.y-midBlock.y,2));
-          collisionDistance = (actor[collisionAxis] + b[collisionAxis])/2;
+          distanceSqr = Math.pow(midActor.x-midBlock.x,2)+Math.pow(midActor.y-midBlock.y,2),
+          collisionDistanceSqr = Math.pow((actor[collisionAxis] + b[collisionAxis])/2, 2);
 
-      if (Math.round(distance) <= collisionDistance) {
+      if (distanceSqr <= collisionDistanceSqr) {
         actor.isMoving = false;
+        // actor = normalizeAfterCollision(actor, b, distance);
       }
     }
   });
@@ -198,7 +229,8 @@ var ctx,
       moving: {x: 0, y: 0},
       isMoving: false,
       hasWon: false,
-      hasLost: false
+      hasLost: false,
+      needsToRender: false
     },
     currentLevel = 1,
     gameLevel,
@@ -237,6 +269,7 @@ function startLevel(){
   actor.hasWon = false;
   actor.isMoving = false;
   actor.hasLost = false;
+  actor.needsToRender = false;
 
   worldGenerator.generate(canvas, gameLevel.actor);
   worldGenerator.generate(canvasBackground, gameLevel.blocks);
@@ -297,16 +330,20 @@ shell.on("tick", function() {
 
 //Render a frame
 shell.on("render", function() {
-  if (actor.isMoving){
-    ctx.clearRect(actor.x, actor.y, actor.width, actor.height);
-
-    ctx.fillStyle = actor.color;
-    actor.x += actor.moving.x;
-    actor.y += actor.moving.y;
-
-    ctx.fillRect(actor.x, actor.y, actor.width, actor.height);
+  // console.log(!actor.needsToRender && !actor.isMoving);
+  if (!actor.needsToRender && !actor.isMoving){
+    return;
   }
-})
+
+  actor.needsToRender = false;
+  ctx.clearRect(actor.x, actor.y, actor.width, actor.height);
+
+  ctx.fillStyle = actor.color;
+  actor.x += actor.moving.x;
+  actor.y += actor.moving.y;
+
+  ctx.fillRect(actor.x, actor.y, actor.width, actor.height);
+});
 
 
 
@@ -1720,7 +1757,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"domready":13,"vkey":14,"invert-hash":15,"uniq":16,"lower-bound":17,"iota-array":18}],13:[function(require,module,exports){
+},{"events":8,"util":9,"./lib/raf-polyfill.js":10,"./lib/mousewheel-polyfill.js":11,"./lib/hrtime-polyfill.js":12,"domready":13,"invert-hash":14,"uniq":15,"vkey":16,"lower-bound":17,"iota-array":18}],13:[function(require,module,exports){
 /*!
   * domready (c) Dustin Diaz 2012 - License MIT
   */
@@ -1776,6 +1813,20 @@ module.exports = createShell
     })
 })
 },{}],14:[function(require,module,exports){
+"use strict"
+
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
+},{}],16:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -1915,20 +1966,6 @@ for(i = 112; i < 136; ++i) {
 
 })()
 },{}],15:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
-},{}],16:[function(require,module,exports){
 "use strict"
 
 function unique_pred(list, compare) {

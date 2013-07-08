@@ -42,6 +42,18 @@ describe("Game Configuration", function(){
       });
     });
 
+    it("Should add middel point for each item", function(){
+      var gameConf = gameConfig.init(conf),
+          blocks = gameConf.getLevel(1).blocks,
+          actor = gameConf.getLevel(1).actor;
+
+      expect(actor.midX).toEqual(305);
+      expect(actor.midY).toEqual(585);
+
+      expect(blocks[0].midX).toEqual(305);
+      expect(blocks[0].midY).toEqual(295);
+    });
+
     it("Should parsed the level correctly", function(){
       var gameConf = gameConfig.init(conf);
 

@@ -62,4 +62,16 @@ describe("I'm aware", function(){
 
     expect(actor.hasLost).toBeTruthy();
   });
+
+  it("Should normalize actor position after collision with block", function(){
+    actor.moving.x = 7;
+
+    for (var i = actor.x; i <= blocks[0].x; i+= actor.moving.x) {
+      actor.x += actor.moving.x;
+      aware(actor, blocks, exit, {width: 150, height: 150});
+    }
+
+    expect(actor.isMoving).toBeFalsy();
+    expect(actor.x).toEqual(60);
+  });
 });

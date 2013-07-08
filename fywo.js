@@ -34,6 +34,34 @@ exports.generate = function(canvas, position){
   return canvas;
 };
 },{}],2:[function(require,module,exports){
+exports.create = function(conf){
+  return new Block(conf);
+};
+
+function Block(conf){
+  this.x = conf.x;
+  this.y = conf.y;
+  this.width = conf.width;
+  this.height = conf.height;
+  this.midX = this.x + (this.width/2);
+  this.midY = this.y + (this.height/2);
+  this.color = conf.color;
+  this.isMoving = false;
+  this.requestRendering = false;
+}
+
+Block.prototype.moveX = function(value) {
+  this.moving = {direction: "x", value: value};
+  this.x += value;
+  this.midX += value;
+};
+
+Block.prototype.moveY = function(value) {
+  this.moving = {direction: "y", value: value};
+  this.y += value;
+  this.midY += value;
+};
+},{}],3:[function(require,module,exports){
 module.exports = {
   world: {
     width: 600,
@@ -90,7 +118,7 @@ module.exports = {
     }
   ]
 }
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 function normalizeAfterCollision(actor, block, currentDistance){
   var moving = "x",
       side = "width";
@@ -150,7 +178,7 @@ module.exports = function(actor, blocks, exit, world){
     }
   });
 };
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 (function(){'use strict';
 
 var block = require("./block");
@@ -170,7 +198,10 @@ GameConfiguration.prototype.parseConf = function(conf) {
   // will set global configuration for each level if none is
   // provided
   conf.levels.forEach(function(l){
-    var newLevel = {};
+    var newLevel = {
+      hasWon: false,
+      hasLost: false
+    };
 
     newLevel.actor = block.create({
       x: l.actor.x,
@@ -212,7 +243,7 @@ exports.init = function(conf){
   return new GameConfiguration(conf)
 }
 })()
-},{"./block":5}],6:[function(require,module,exports){
+},{"./block":2}],6:[function(require,module,exports){
 /*
  * find-your-way-out
  * https://github.com/keripix/find-your-way-out
@@ -225,31 +256,20 @@ exports.init = function(conf){
 
 var gameConfiguration = require("./gameConfiguration"),
     worldGenerator = require("./worldGenerator"),
+    block = require("./block"),
     conf = require("../conf/game"),
     shell = require("game-shell")(),
     aware = require("./aware");
 
 var ctx,
     game = gameConfiguration.init(conf),
-    actor = { // TODO not beautifull
-      x: 0,
-      y: 0,
-      midX: 0,
-      midY: 0,
-      width: 0,
-      height: 0,
-      moving: {x: 0, y: 0},
-      isMoving: false,
-      hasWon: false,
-      hasLost: false,
-      needsToRender: false
-    },
     currentLevel = 1,
     gameLevel,
     canvas,
     canvasBackground,
     bkgCtx,
-    speed = 5;
+    speed = 5,
+    actor;
 
 // Bind movement
 shell.bind("move-left", "left", "A");
@@ -271,21 +291,9 @@ function startLevel(){
     return;
   }
 
-  // TODO not beautifull
-  actor.x = gameLevel.actor.x;
-  actor.y = gameLevel.actor.y;
-  actor.midX = gameLevel.actor.midX;
-  actor.midY = gameLevel.actor.midY;
-  actor.moving = {x: 0, y: 0},
-  actor.width = gameLevel.actor.width;
-  actor.height = gameLevel.actor.height;
-  actor.color = gameLevel.actor.color;
-  actor.hasWon = false;
-  actor.isMoving = false;
-  actor.hasLost = false;
-  actor.needsToRender = false;
+  actor = gameLevel.actor;
 
-  worldGenerator.generate(canvas, gameLevel.actor);
+  worldGenerator.generate(canvas, actor);
   worldGenerator.generate(canvasBackground, gameLevel.blocks);
   worldGenerator.generate(canvasBackground, gameLevel.out);
 }
@@ -364,35 +372,7 @@ shell.on("render", function() {
 
 
 
-},{"./gameConfiguration":4,"./worldGenerator":1,"../conf/game":2,"./aware":3,"game-shell":7}],5:[function(require,module,exports){
-exports.create = function(conf){
-  return new Block(conf);
-};
-
-function Block(conf){
-  this.x = conf.x;
-  this.y = conf.y;
-  this.width = conf.width;
-  this.height = conf.height;
-  this.midX = this.x + (this.width/2);
-  this.midY = this.y + (this.height/2);
-  this.color = conf.color;
-  this.isMoving = false;
-  this.requestRendering = false;
-}
-
-Block.prototype.moveX = function(value) {
-  this.moving = {direction: "x", value: value};
-  this.x += value;
-  this.midX += value;
-};
-
-Block.prototype.moveY = function(value) {
-  this.moving = {direction: "y", value: value};
-  this.y += value;
-  this.midY += value;
-};
-},{}],8:[function(require,module,exports){
+},{"./gameConfiguration":5,"./worldGenerator":1,"./block":2,"../conf/game":3,"./aware":4,"game-shell":7}],8:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1856,20 +1836,6 @@ module.exports = createShell
       loaded ? fn() : fns.push(fn)
     })
 })
-},{}],16:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
 },{}],15:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
@@ -2009,6 +1975,20 @@ for(i = 112; i < 136; ++i) {
 }
 
 })()
+},{}],16:[function(require,module,exports){
+"use strict"
+
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
+    }
+  }
+  return result
+}
+
+module.exports = invert
 },{}],17:[function(require,module,exports){
 "use strict"
 

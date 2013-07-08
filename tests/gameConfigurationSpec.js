@@ -42,7 +42,7 @@ describe("Game Configuration", function(){
       });
     });
 
-    it("Should add middel point for each item", function(){
+    it("Should add middle point for each item", function(){
       var gameConf = gameConfig.init(conf),
           blocks = gameConf.getLevel(1).blocks,
           actor = gameConf.getLevel(1).actor;
@@ -58,6 +58,8 @@ describe("Game Configuration", function(){
       var gameConf = gameConfig.init(conf);
 
       expect(gameConf.getLevel("1")).toBeDefined();
+      expect(gameConf.getLevel(1).hasWon).toBeFalsy();
+      expect(gameConf.getLevel(1).hasLost).toBeFalsy();
 
       var level1 = gameConf.getLevel("1");
 

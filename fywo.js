@@ -48,18 +48,27 @@ function Block(conf){
   this.color = conf.color;
   this.isMoving = false;
   this.requestRendering = false;
+  this.moving = {amount: 0, value: 0, direction: 0};
 }
 
 Block.prototype.moveX = function(value) {
-  this.moving = {direction: "x", value: value};
+  this.moving = {amount: value + "x", value: value, direction: "x"};
   this.x += value;
   this.midX += value;
+  this.requestRendering = true;
 };
 
 Block.prototype.moveY = function(value) {
-  this.moving = {direction: "y", value: value};
+  this.moving = {amount: value + "y", value: value, direction: "y"};
   this.y += value;
   this.midY += value;
+  this.requestRendering = true;
+};
+
+Block.prototype.stop = function() {
+  this.moving = {amount: 0, value: 0, direction: 0};
+  this.isMoving = false;
+  this.requestRendering = false;
 };
 },{}],3:[function(require,module,exports){
 module.exports = {
@@ -120,13 +129,8 @@ module.exports = {
 }
 },{}],4:[function(require,module,exports){
 function normalizeAfterCollision(actor, block, currentDistance){
-  var moving = "x",
-      side = "width";
-
-  if (actor.moving.x === 0){
-    moving = "y";
-    side = "height";
-  }
+  var moving = actor.moving.direction,
+      side = moving === "x" ? "width" : "height";
 
   var shouldDistance = Math.abs(actor[side]+block[side])/2,
       diff = Math.round(shouldDistance) - Math.round(currentDistance);
@@ -141,17 +145,10 @@ function normalizeAfterCollision(actor, block, currentDistance){
 }
 
 module.exports = function(actor, blocks, exit, world){
-  var check = "x",
-      moving = "y",
-      bound = actor.height,
-      collisionAxis = "height";
-
-  if (actor.moving.x !== 0) {
-    check = "y";
-    moving = "x";
-    bound = actor.width;
-    collisionAxis = "width";
-  }
+  var moving = actor.moving.direction,
+      check = moving === "x" ? "y" : "x",
+      bound = moving === "x" ? actor.width : actor.height,
+      collisionAxis = moving === "x" ? "width" : "height";
 
   // check the distance between the actor and the exit door
   if (Math.sqrt(Math.pow(actor.midX-exit.midX,2)+Math.pow(actor.midY-exit.midY,2)) <= ((actor[collisionAxis]+exit[collisionAxis])/2)){
@@ -172,7 +169,7 @@ module.exports = function(actor, blocks, exit, world){
           collisionDistanceSqr = Math.pow((actor[collisionAxis] + b[collisionAxis])/2, 2);
 
       if (distanceSqr <= collisionDistanceSqr) {
-        actor.isMoving = false;
+        actor.stop();
         // actor = normalizeAfterCollision(actor, b, distance);
       }
     }
@@ -270,7 +267,8 @@ var ctx,
     canvasBackground,
     bkgCtx,
     speed = 5,
-    actor;
+    actor,
+    moveDirection = {};
 
 // Bind movement
 shell.bind("move-left", "left", "A");
@@ -332,21 +330,17 @@ shell.on("tick", function() {
     return;
   }
 
-  if(shell.wasDown("move-left") && actor.moving.x !== -speed) {
-    actor.moving.x = -speed;
-    actor.moving.y = 0;
+  if(shell.wasDown("move-left") && actor.moving.amount !== -speed+"x") {
+    moveDirection = {direction: "x", value: -speed};
     actor.isMoving = true;
-  } else if(shell.wasDown("move-right") && actor.moving.x !== speed) {
-    actor.moving.x = speed;
-    actor.moving.y = 0;
+  } else if(shell.wasDown("move-right") && actor.moving.value !== speed+"x") {
+    moveDirection = {direction: "x", value: speed};
     actor.isMoving = true;
-  } else if(shell.wasDown("move-up") && actor.moving.y !== -speed) {
-    actor.moving.x = 0;
-    actor.moving.y = -speed;
+  } else if(shell.wasDown("move-up") && actor.moving.value !== -speed+"y") {
+    moveDirection = {direction: "y", value: -speed};
     actor.isMoving = true;
-  } else if(shell.wasDown("move-down") && actor.moving.y !== speed) {
-    actor.moving.x = 0;
-    actor.moving.y = speed;
+  } else if(shell.wasDown("move-down") && actor.moving.value !== speed+"y") {
+    moveDirection = {direction: "y", value: speed};
     actor.isMoving = true;
   }
 });
@@ -354,18 +348,16 @@ shell.on("tick", function() {
 //Render a frame
 shell.on("render", function() {
   // console.log(!actor.needsToRender && !actor.isMoving);
-  if (!actor.needsToRender && !actor.isMoving){
+  if (!actor.requestRendering && !actor.isMoving){
     return;
   }
 
-  actor.needsToRender = false;
   ctx.clearRect(actor.x, actor.y, actor.width, actor.height);
 
   ctx.fillStyle = actor.color;
-  actor.x += actor.moving.x;
-  actor.y += actor.moving.y;
-  actor.midX += actor.moving.x;
-  actor.midY += actor.moving.y;
+  // eg actor.moveY
+  console.log("move"+moveDirection.direction.toUpperCase());
+  actor["move"+moveDirection.direction.toUpperCase()].call(actor, moveDirection.value);
 
   ctx.fillRect(actor.x, actor.y, actor.width, actor.height);
 });
@@ -978,6 +970,36 @@ exports.create = function(conf){
   return actor;
 };
 },{"./block":2}],12:[function(require,module,exports){
+// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+ 
+// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+ 
+// MIT license
+var lastTime = 0;
+var vendors = ['ms', 'moz', 'webkit', 'o'];
+for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+                               || window[vendors[x]+'CancelRequestAnimationFrame'];
+}
+
+if (!window.requestAnimationFrame)
+    window.requestAnimationFrame = function(callback, element) {
+        var currTime = new Date().getTime();
+        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+        var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+          timeToCall);
+        lastTime = currTime + timeToCall;
+        return id;
+    };
+
+if (!window.cancelAnimationFrame)
+    window.cancelAnimationFrame = function(id) {
+        clearTimeout(id);
+    };
+
+},{}],13:[function(require,module,exports){
 //Adapted from here: https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel?redirectlocale=en-US&redirectslug=DOM%2FMozilla_event_reference%2Fwheel
 
 var prefix = "", _addEventListener, onwheel, support;
@@ -1037,36 +1059,6 @@ module.exports = function( elem, callback, useCapture ) {
     _addWheelListener( elem, "MozMousePixelScroll", callback, useCapture );
   }
 };
-},{}],13:[function(require,module,exports){
-// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
- 
-// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
- 
-// MIT license
-var lastTime = 0;
-var vendors = ['ms', 'moz', 'webkit', 'o'];
-for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
-                               || window[vendors[x]+'CancelRequestAnimationFrame'];
-}
-
-if (!window.requestAnimationFrame)
-    window.requestAnimationFrame = function(callback, element) {
-        var currTime = new Date().getTime();
-        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-        var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
-          timeToCall);
-        lastTime = currTime + timeToCall;
-        return id;
-    };
-
-if (!window.cancelAnimationFrame)
-    window.cancelAnimationFrame = function(id) {
-        clearTimeout(id);
-    };
-
 },{}],14:[function(require,module,exports){
 if(window.performance.now) {
   module.exports = function() { return window.performance.now() }
@@ -1793,62 +1785,79 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":10,"util":11,"./lib/raf-polyfill.js":13,"./lib/mousewheel-polyfill.js":12,"./lib/hrtime-polyfill.js":14,"domready":15,"vkey":16,"invert-hash":17,"uniq":18,"lower-bound":19,"iota-array":20}],15:[function(require,module,exports){
-/*!
-  * domready (c) Dustin Diaz 2012 - License MIT
-  */
-!function (name, definition) {
-  if (typeof module != 'undefined') module.exports = definition()
-  else if (typeof define == 'function' && typeof define.amd == 'object') define(definition)
-  else this[name] = definition()
-}('domready', function (ready) {
+},{"events":10,"util":11,"./lib/raf-polyfill.js":12,"./lib/mousewheel-polyfill.js":13,"./lib/hrtime-polyfill.js":14,"invert-hash":15,"uniq":16,"vkey":17,"domready":18,"lower-bound":19,"iota-array":20}],15:[function(require,module,exports){
+"use strict"
 
-  var fns = [], fn, f = false
-    , doc = document
-    , testEl = doc.documentElement
-    , hack = testEl.doScroll
-    , domContentLoaded = 'DOMContentLoaded'
-    , addEventListener = 'addEventListener'
-    , onreadystatechange = 'onreadystatechange'
-    , readyState = 'readyState'
-    , loaded = /^loade|c/.test(doc[readyState])
-
-  function flush(f) {
-    loaded = 1
-    while (f = fns.shift()) f()
-  }
-
-  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
-    doc.removeEventListener(domContentLoaded, fn, f)
-    flush()
-  }, f)
-
-
-  hack && doc.attachEvent(onreadystatechange, fn = function () {
-    if (/^c/.test(doc[readyState])) {
-      doc.detachEvent(onreadystatechange, fn)
-      flush()
+function invert(hash) {
+  var result = {}
+  for(var i in hash) {
+    if(hash.hasOwnProperty(i)) {
+      result[hash[i]] = i
     }
-  })
+  }
+  return result
+}
 
-  return (ready = hack ?
-    function (fn) {
-      self != top ?
-        loaded ? fn() : fns.push(fn) :
-        function () {
-          try {
-            testEl.doScroll('left')
-          } catch (e) {
-            return setTimeout(function() { ready(fn) }, 50)
-          }
-          fn()
-        }()
-    } :
-    function (fn) {
-      loaded ? fn() : fns.push(fn)
-    })
-})
+module.exports = invert
 },{}],16:[function(require,module,exports){
+"use strict"
+
+function unique_pred(list, compare) {
+  var ptr = 1
+    , len = list.length
+    , a=list[0], b=list[0]
+  for(var i=1; i<len; ++i) {
+    b = a
+    a = list[i]
+    if(compare(a, b)) {
+      if(i === ptr) {
+        ptr++
+        continue
+      }
+      list[ptr++] = a
+    }
+  }
+  list.length = ptr
+  return list
+}
+
+function unique_eq(list) {
+  var ptr = 1
+    , len = list.length
+    , a=list[0], b = list[0]
+  for(var i=1; i<len; ++i, b=a) {
+    b = a
+    a = list[i]
+    if(a !== b) {
+      if(i === ptr) {
+        ptr++
+        continue
+      }
+      list[ptr++] = a
+    }
+  }
+  list.length = ptr
+  return list
+}
+
+function unique(list, compare, sorted) {
+  if(list.length === 0) {
+    return []
+  }
+  if(compare) {
+    if(!sorted) {
+      list.sort(compare)
+    }
+    return unique_pred(list, compare)
+  }
+  if(!sorted) {
+    list.sort()
+  }
+  return unique_eq(list)
+}
+
+module.exports = unique
+},{}],17:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -1987,78 +1996,61 @@ for(i = 112; i < 136; ++i) {
 }
 
 })()
-},{}],17:[function(require,module,exports){
-"use strict"
-
-function invert(hash) {
-  var result = {}
-  for(var i in hash) {
-    if(hash.hasOwnProperty(i)) {
-      result[hash[i]] = i
-    }
-  }
-  return result
-}
-
-module.exports = invert
 },{}],18:[function(require,module,exports){
-"use strict"
+/*!
+  * domready (c) Dustin Diaz 2012 - License MIT
+  */
+!function (name, definition) {
+  if (typeof module != 'undefined') module.exports = definition()
+  else if (typeof define == 'function' && typeof define.amd == 'object') define(definition)
+  else this[name] = definition()
+}('domready', function (ready) {
 
-function unique_pred(list, compare) {
-  var ptr = 1
-    , len = list.length
-    , a=list[0], b=list[0]
-  for(var i=1; i<len; ++i) {
-    b = a
-    a = list[i]
-    if(compare(a, b)) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      list[ptr++] = a
+  var fns = [], fn, f = false
+    , doc = document
+    , testEl = doc.documentElement
+    , hack = testEl.doScroll
+    , domContentLoaded = 'DOMContentLoaded'
+    , addEventListener = 'addEventListener'
+    , onreadystatechange = 'onreadystatechange'
+    , readyState = 'readyState'
+    , loaded = /^loade|c/.test(doc[readyState])
+
+  function flush(f) {
+    loaded = 1
+    while (f = fns.shift()) f()
+  }
+
+  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
+    doc.removeEventListener(domContentLoaded, fn, f)
+    flush()
+  }, f)
+
+
+  hack && doc.attachEvent(onreadystatechange, fn = function () {
+    if (/^c/.test(doc[readyState])) {
+      doc.detachEvent(onreadystatechange, fn)
+      flush()
     }
-  }
-  list.length = ptr
-  return list
-}
+  })
 
-function unique_eq(list) {
-  var ptr = 1
-    , len = list.length
-    , a=list[0], b = list[0]
-  for(var i=1; i<len; ++i, b=a) {
-    b = a
-    a = list[i]
-    if(a !== b) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      list[ptr++] = a
-    }
-  }
-  list.length = ptr
-  return list
-}
-
-function unique(list, compare, sorted) {
-  if(list.length === 0) {
-    return []
-  }
-  if(compare) {
-    if(!sorted) {
-      list.sort(compare)
-    }
-    return unique_pred(list, compare)
-  }
-  if(!sorted) {
-    list.sort()
-  }
-  return unique_eq(list)
-}
-
-module.exports = unique
+  return (ready = hack ?
+    function (fn) {
+      self != top ?
+        loaded ? fn() : fns.push(fn) :
+        function () {
+          try {
+            testEl.doScroll('left')
+          } catch (e) {
+            return setTimeout(function() { ready(fn) }, 50)
+          }
+          fn()
+        }()
+    } :
+    function (fn) {
+      loaded ? fn() : fns.push(fn)
+    })
+})
 },{}],19:[function(require,module,exports){
 "use strict"
 

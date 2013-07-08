@@ -181,7 +181,8 @@ module.exports = function(actor, blocks, exit, world){
 },{}],5:[function(require,module,exports){
 (function(){'use strict';
 
-var block = require("./block");
+var block = require("./block"),
+    actor = require("./actor");
 
 function GameConfiguration(conf){
   this.parseConf(conf);
@@ -203,7 +204,7 @@ GameConfiguration.prototype.parseConf = function(conf) {
       hasLost: false
     };
 
-    newLevel.actor = block.create({
+    newLevel.actor = actor.create({
       x: l.actor.x,
       y: l.actor.y,
       width: l.actor.width || conf.world.actor.width,
@@ -243,7 +244,7 @@ exports.init = function(conf){
   return new GameConfiguration(conf)
 }
 })()
-},{"./block":2}],6:[function(require,module,exports){
+},{"./block":2,"./actor":6}],7:[function(require,module,exports){
 /*
  * find-your-way-out
  * https://github.com/keripix/find-your-way-out
@@ -372,7 +373,7 @@ shell.on("render", function() {
 
 
 
-},{"./gameConfiguration":5,"./worldGenerator":1,"./block":2,"../conf/game":3,"./aware":4,"game-shell":7}],8:[function(require,module,exports){
+},{"./gameConfiguration":5,"./worldGenerator":1,"./block":2,"../conf/game":3,"./aware":4,"game-shell":8}],9:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -426,7 +427,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 (function(process){if (!process.EventEmitter) process.EventEmitter = function () {};
 
 var EventEmitter = exports.EventEmitter = process.EventEmitter;
@@ -612,7 +613,7 @@ EventEmitter.prototype.listeners = function(type) {
 };
 
 })(require("__browserify_process"))
-},{"__browserify_process":8}],10:[function(require,module,exports){
+},{"__browserify_process":9}],11:[function(require,module,exports){
 var events = require('events');
 
 exports.isArray = isArray;
@@ -965,37 +966,18 @@ exports.format = function(f) {
   return str;
 };
 
-},{"events":9}],11:[function(require,module,exports){
-// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
- 
-// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
- 
-// MIT license
-var lastTime = 0;
-var vendors = ['ms', 'moz', 'webkit', 'o'];
-for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
-                               || window[vendors[x]+'CancelRequestAnimationFrame'];
-}
+},{"events":10}],6:[function(require,module,exports){
+var block = require("./block");
 
-if (!window.requestAnimationFrame)
-    window.requestAnimationFrame = function(callback, element) {
-        var currTime = new Date().getTime();
-        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-        var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
-          timeToCall);
-        lastTime = currTime + timeToCall;
-        return id;
-    };
+exports.create = function(conf){
+  var actor = block.create(conf);
 
-if (!window.cancelAnimationFrame)
-    window.cancelAnimationFrame = function(id) {
-        clearTimeout(id);
-    };
+  actor.hasWon = false;
+  actor.hasLost = false;
 
-},{}],12:[function(require,module,exports){
+  return actor;
+};
+},{"./block":2}],12:[function(require,module,exports){
 //Adapted from here: https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel?redirectlocale=en-US&redirectslug=DOM%2FMozilla_event_reference%2Fwheel
 
 var prefix = "", _addEventListener, onwheel, support;
@@ -1056,6 +1038,36 @@ module.exports = function( elem, callback, useCapture ) {
   }
 };
 },{}],13:[function(require,module,exports){
+// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+ 
+// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+ 
+// MIT license
+var lastTime = 0;
+var vendors = ['ms', 'moz', 'webkit', 'o'];
+for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+                               || window[vendors[x]+'CancelRequestAnimationFrame'];
+}
+
+if (!window.requestAnimationFrame)
+    window.requestAnimationFrame = function(callback, element) {
+        var currTime = new Date().getTime();
+        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+        var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+          timeToCall);
+        lastTime = currTime + timeToCall;
+        return id;
+    };
+
+if (!window.cancelAnimationFrame)
+    window.cancelAnimationFrame = function(id) {
+        clearTimeout(id);
+    };
+
+},{}],14:[function(require,module,exports){
 if(window.performance.now) {
   module.exports = function() { return window.performance.now() }
 } else if(window.performance.webktiNow) {
@@ -1065,7 +1077,7 @@ if(window.performance.now) {
 } else {
   module.exports = function() { return (new Date()).getTime() }
 }
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict"
 
 var EventEmitter = require("events").EventEmitter
@@ -1781,7 +1793,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":9,"util":10,"./lib/raf-polyfill.js":11,"./lib/mousewheel-polyfill.js":12,"./lib/hrtime-polyfill.js":13,"domready":14,"vkey":15,"invert-hash":16,"uniq":17,"lower-bound":18,"iota-array":19}],14:[function(require,module,exports){
+},{"events":10,"util":11,"./lib/raf-polyfill.js":13,"./lib/mousewheel-polyfill.js":12,"./lib/hrtime-polyfill.js":14,"domready":15,"vkey":16,"invert-hash":17,"uniq":18,"lower-bound":19,"iota-array":20}],15:[function(require,module,exports){
 /*!
   * domready (c) Dustin Diaz 2012 - License MIT
   */
@@ -1836,7 +1848,7 @@ module.exports = createShell
       loaded ? fn() : fns.push(fn)
     })
 })
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 (function(){var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -1975,7 +1987,7 @@ for(i = 112; i < 136; ++i) {
 }
 
 })()
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict"
 
 function invert(hash) {
@@ -1989,7 +2001,7 @@ function invert(hash) {
 }
 
 module.exports = invert
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict"
 
 function unique_pred(list, compare) {
@@ -2047,7 +2059,7 @@ function unique(list, compare, sorted) {
 }
 
 module.exports = unique
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict"
 
 function lowerBound_cmp(array, value, compare, lo, hi) {
@@ -2103,7 +2115,7 @@ function lowerBound(array, value, compare, lo, hi) {
 }
 
 module.exports = lowerBound
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict"
 
 function iota(n) {
@@ -2115,5 +2127,5 @@ function iota(n) {
 }
 
 module.exports = iota
-},{}]},{},[6])
+},{}]},{},[7])
 ;

@@ -173,7 +173,7 @@ module.exports = function(actor, blocks, exit, world){
   }
 
   blocks.forEach(function(b){
-    if (b[check] <= (actor[check] + bound) && b[check] >= (actor[check] - bound)) {
+    if (b[check] < (actor[check] + bound) && b[check] > (actor[check] - bound)) {
 
       var distanceSqr = Math.pow(actor.midX-b.midX,2)+Math.pow(actor.midY-b.midY, 2),
           collisionDistanceSqr = Math.pow((actor[collisionSide] + b[collisionSide])/2, 2);
@@ -1807,7 +1807,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":10,"util":11,"./lib/raf-polyfill.js":12,"./lib/mousewheel-polyfill.js":13,"./lib/hrtime-polyfill.js":14,"domready":15,"vkey":16,"invert-hash":17,"uniq":18,"iota-array":19,"lower-bound":20}],15:[function(require,module,exports){
+},{"events":10,"util":11,"./lib/raf-polyfill.js":12,"./lib/mousewheel-polyfill.js":13,"./lib/hrtime-polyfill.js":14,"domready":15,"vkey":16,"invert-hash":17,"uniq":18,"lower-bound":19,"iota-array":20}],15:[function(require,module,exports){
 /*!
   * domready (c) Dustin Diaz 2012 - License MIT
   */
@@ -2015,18 +2015,6 @@ function invert(hash) {
 }
 
 module.exports = invert
-},{}],19:[function(require,module,exports){
-"use strict"
-
-function iota(n) {
-  var result = new Array(n)
-  for(var i=0; i<n; ++i) {
-    result[i] = i
-  }
-  return result
-}
-
-module.exports = iota
 },{}],18:[function(require,module,exports){
 "use strict"
 
@@ -2085,7 +2073,7 @@ function unique(list, compare, sorted) {
 }
 
 module.exports = unique
-},{}],20:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict"
 
 function lowerBound_cmp(array, value, compare, lo, hi) {
@@ -2141,5 +2129,17 @@ function lowerBound(array, value, compare, lo, hi) {
 }
 
 module.exports = lowerBound
+},{}],20:[function(require,module,exports){
+"use strict"
+
+function iota(n) {
+  var result = new Array(n)
+  for(var i=0; i<n; ++i) {
+    result[i] = i
+  }
+  return result
+}
+
+module.exports = iota
 },{}]},{},[7])
 ;

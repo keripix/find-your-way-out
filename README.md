@@ -72,6 +72,7 @@ What if, in order to set the configuration of each level, I just need to write t
 1. Make it more challenging? :p
 2. Level Editor :D
 3. Use countdown
+4. Make it more pretty?
 
 ## License
 Copyright (c) 2013 A. Akbar Hidayat

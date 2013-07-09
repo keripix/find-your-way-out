@@ -8,8 +8,6 @@ describe("Game Configuration", function(){
 
       expect(gameConf.world).toBeDefined();
       expect(gameConf.levels).toBeDefined();
-
-      expect(gameConf.levels.length).toEqual(2);
     });
 
     // it("Should throw Error if bad conf is passed", function(){

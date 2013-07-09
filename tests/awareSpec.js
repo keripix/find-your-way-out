@@ -1,5 +1,5 @@
 var Aware = require("./../lib/aware"),
-    block = require("./../lib/block"),
+    Block = require("./../lib/block"),
     actor = require("./../lib/actor"),
     aware, player, blocks, exit, world;
 
@@ -13,14 +13,14 @@ describe("I'm aware", function(){
     });
     player.isMoving = true;
 
-    blocks = [block.create({
+    blocks = [new Block({
       x: 50,
       y: 12,
       width: 10,
       height: 10
     })];
 
-    exit = block.create({
+    exit = new Block({
       x: 100,
       y: 100,
       width: 10,

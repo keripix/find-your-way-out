@@ -1,4 +1,4 @@
-var block = require("./../lib/block"),
+var Block = require("./../lib/block"),
     conf = {
       x: 10,
       y: 10,
@@ -9,14 +9,14 @@ var block = require("./../lib/block"),
 
 describe("Block Item", function(){
   it("Should create block", function(){
-    var item = block.create(conf);
+    var item = new Block(conf);
 
     expect(item.x).toEqual(10);
     expect(item.midX).toEqual(15);
   });
 
   it("Should move and update property correctly", function(){
-    var item = block.create(conf);
+    var item = new Block(conf);
 
     item.moveX(10);
     expect(item.x).toEqual(20);
@@ -44,7 +44,7 @@ describe("Block Item", function(){
   });
 
   it("Should not move when stopped", function(){
-    var item = block.create(conf);
+    var item = new Block(conf);
 
     item.moveX(10);
     item.stop();

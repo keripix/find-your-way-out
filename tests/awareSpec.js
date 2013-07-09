@@ -36,6 +36,7 @@ describe("I'm aware", function(){
     player = blocks = exit = null;
   });
 
+  // global
   it("Should stop when the distance is to close", function(){
     while(true){
       player.moveX(5);

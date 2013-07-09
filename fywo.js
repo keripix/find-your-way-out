@@ -34,46 +34,6 @@ exports.generate = function(canvas, position){
   return canvas;
 };
 },{}],2:[function(require,module,exports){
-exports.create = function(conf){
-  return new Block(conf);
-};
-
-function Block(conf){
-  this.x = conf.x;
-  this.y = conf.y;
-  this.width = conf.width;
-  this.height = conf.height;
-  this.midX = this.x + (this.width/2);
-  this.midY = this.y + (this.height/2);
-  this.color = conf.color;
-  this.isMoving = false;
-  this.requestRendering = false;
-  this.requestRenderingForce = false;
-  this.moving = {amount: 0, value: 0, direction: 0};
-}
-
-Block.prototype.moveX = function(value) {
-  this.moving = {value: value, direction: "x"};
-  this.x += value;
-  this.midX += value;
-  this.isMoving = true;
-  this.requestRendering = true;
-};
-
-Block.prototype.moveY = function(value) {
-  this.moving = {value: value, direction: "y"};
-  this.y += value;
-  this.midY += value;
-  this.isMoving = true;
-  this.requestRendering = true;
-};
-
-Block.prototype.stop = function() {
-  this.moving = {amount: 0, value: 0, direction: 0};
-  this.isMoving = false;
-  this.requestRendering = false;
-};
-},{}],3:[function(require,module,exports){
 module.exports = {
   world: {
     width: 600,
@@ -130,6 +90,46 @@ module.exports = {
     }
   ]
 }
+},{}],3:[function(require,module,exports){
+exports.create = function(conf){
+  return new Block(conf);
+};
+
+function Block(conf){
+  this.x = conf.x;
+  this.y = conf.y;
+  this.width = conf.width;
+  this.height = conf.height;
+  this.midX = this.x + (this.width/2);
+  this.midY = this.y + (this.height/2);
+  this.color = conf.color;
+  this.isMoving = false;
+  this.requestRendering = false;
+  this.requestRenderingForce = false;
+  this.moving = {amount: 0, value: 0, direction: 0};
+}
+
+Block.prototype.moveX = function(value) {
+  this.moving = {value: value, direction: "x"};
+  this.x += value;
+  this.midX += value;
+  this.isMoving = true;
+  this.requestRendering = true;
+};
+
+Block.prototype.moveY = function(value) {
+  this.moving = {value: value, direction: "y"};
+  this.y += value;
+  this.midY += value;
+  this.isMoving = true;
+  this.requestRendering = true;
+};
+
+Block.prototype.stop = function() {
+  this.moving = {amount: 0, value: 0, direction: 0};
+  this.isMoving = false;
+  this.requestRendering = false;
+};
 },{}],4:[function(require,module,exports){
 function normalizeAfterCollision(actor, block, currentDistance){
   if (!actor.hasOwnProperty("stopperLocation")){
@@ -173,7 +173,7 @@ module.exports = function(actor, blocks, exit, world){
   }
 
   blocks.forEach(function(b){
-    if (b[check] <= (actor[check] + bound) && b[check] >= (actor[check] - bound)) {
+    if (b[check] < (actor[check] + bound) && b[check] > (actor[check] - bound)) {
 
       var distanceSqr = Math.pow(actor.midX-b.midX,2)+Math.pow(actor.midY-b.midY, 2),
           collisionDistanceSqr = Math.pow((actor[collisionSide] + b[collisionSide])/2, 2);
@@ -261,7 +261,7 @@ exports.init = function(conf){
   return new GameConfiguration(conf);
 };
 })()
-},{"./block":2,"./actor":6}],7:[function(require,module,exports){
+},{"./block":3,"./actor":6}],7:[function(require,module,exports){
 /*
  * find-your-way-out
  * https://github.com/keripix/find-your-way-out
@@ -386,247 +386,7 @@ shell.on("render", function() {
 
 
 
-},{"./gameConfiguration":5,"./worldGenerator":1,"./block":2,"../conf/game":3,"./aware":4,"game-shell":8}],9:[function(require,module,exports){
-// shim for using process in browser
-
-var process = module.exports = {};
-
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
-
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
-    }
-
-    if (canPost) {
-        var queue = [];
-        window.addEventListener('message', function (ev) {
-            if (ev.source === window && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
-    }
-
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
-    };
-})();
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-}
-
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-
-},{}],10:[function(require,module,exports){
-(function(process){if (!process.EventEmitter) process.EventEmitter = function () {};
-
-var EventEmitter = exports.EventEmitter = process.EventEmitter;
-var isArray = typeof Array.isArray === 'function'
-    ? Array.isArray
-    : function (xs) {
-        return Object.prototype.toString.call(xs) === '[object Array]'
-    }
-;
-function indexOf (xs, x) {
-    if (xs.indexOf) return xs.indexOf(x);
-    for (var i = 0; i < xs.length; i++) {
-        if (x === xs[i]) return i;
-    }
-    return -1;
-}
-
-// By default EventEmitters will print a warning if more than
-// 10 listeners are added to it. This is a useful default which
-// helps finding memory leaks.
-//
-// Obviously not all Emitters should be limited to 10. This function allows
-// that to be increased. Set to zero for unlimited.
-var defaultMaxListeners = 10;
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!this._events) this._events = {};
-  this._events.maxListeners = n;
-};
-
-
-EventEmitter.prototype.emit = function(type) {
-  // If there is no 'error' event listener then throw.
-  if (type === 'error') {
-    if (!this._events || !this._events.error ||
-        (isArray(this._events.error) && !this._events.error.length))
-    {
-      if (arguments[1] instanceof Error) {
-        throw arguments[1]; // Unhandled 'error' event
-      } else {
-        throw new Error("Uncaught, unspecified 'error' event.");
-      }
-      return false;
-    }
-  }
-
-  if (!this._events) return false;
-  var handler = this._events[type];
-  if (!handler) return false;
-
-  if (typeof handler == 'function') {
-    switch (arguments.length) {
-      // fast cases
-      case 1:
-        handler.call(this);
-        break;
-      case 2:
-        handler.call(this, arguments[1]);
-        break;
-      case 3:
-        handler.call(this, arguments[1], arguments[2]);
-        break;
-      // slower
-      default:
-        var args = Array.prototype.slice.call(arguments, 1);
-        handler.apply(this, args);
-    }
-    return true;
-
-  } else if (isArray(handler)) {
-    var args = Array.prototype.slice.call(arguments, 1);
-
-    var listeners = handler.slice();
-    for (var i = 0, l = listeners.length; i < l; i++) {
-      listeners[i].apply(this, args);
-    }
-    return true;
-
-  } else {
-    return false;
-  }
-};
-
-// EventEmitter is defined in src/node_events.cc
-// EventEmitter.prototype.emit() is also defined there.
-EventEmitter.prototype.addListener = function(type, listener) {
-  if ('function' !== typeof listener) {
-    throw new Error('addListener only takes instances of Function');
-  }
-
-  if (!this._events) this._events = {};
-
-  // To avoid recursion in the case that type == "newListeners"! Before
-  // adding it to the listeners, first emit "newListeners".
-  this.emit('newListener', type, listener);
-
-  if (!this._events[type]) {
-    // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  } else if (isArray(this._events[type])) {
-
-    // Check for listener leak
-    if (!this._events[type].warned) {
-      var m;
-      if (this._events.maxListeners !== undefined) {
-        m = this._events.maxListeners;
-      } else {
-        m = defaultMaxListeners;
-      }
-
-      if (m && m > 0 && this._events[type].length > m) {
-        this._events[type].warned = true;
-        console.error('(node) warning: possible EventEmitter memory ' +
-                      'leak detected. %d listeners added. ' +
-                      'Use emitter.setMaxListeners() to increase limit.',
-                      this._events[type].length);
-        console.trace();
-      }
-    }
-
-    // If we've already got an array, just append.
-    this._events[type].push(listener);
-  } else {
-    // Adding the second element, need to change to array.
-    this._events[type] = [this._events[type], listener];
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-
-EventEmitter.prototype.once = function(type, listener) {
-  var self = this;
-  self.on(type, function g() {
-    self.removeListener(type, g);
-    listener.apply(this, arguments);
-  });
-
-  return this;
-};
-
-EventEmitter.prototype.removeListener = function(type, listener) {
-  if ('function' !== typeof listener) {
-    throw new Error('removeListener only takes instances of Function');
-  }
-
-  // does not use listeners(), so no side effect of creating _events[type]
-  if (!this._events || !this._events[type]) return this;
-
-  var list = this._events[type];
-
-  if (isArray(list)) {
-    var i = indexOf(list, listener);
-    if (i < 0) return this;
-    list.splice(i, 1);
-    if (list.length == 0)
-      delete this._events[type];
-  } else if (this._events[type] === listener) {
-    delete this._events[type];
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.removeAllListeners = function(type) {
-  if (arguments.length === 0) {
-    this._events = {};
-    return this;
-  }
-
-  // does not use listeners(), so no side effect of creating _events[type]
-  if (type && this._events && this._events[type]) this._events[type] = null;
-  return this;
-};
-
-EventEmitter.prototype.listeners = function(type) {
-  if (!this._events) this._events = {};
-  if (!this._events[type]) this._events[type] = [];
-  if (!isArray(this._events[type])) {
-    this._events[type] = [this._events[type]];
-  }
-  return this._events[type];
-};
-
-})(require("__browserify_process"))
-},{"__browserify_process":9}],11:[function(require,module,exports){
+},{"./gameConfiguration":5,"./worldGenerator":1,"./block":3,"../conf/game":2,"./aware":4,"game-shell":8}],9:[function(require,module,exports){
 var events = require('events');
 
 exports.isArray = isArray;
@@ -979,7 +739,247 @@ exports.format = function(f) {
   return str;
 };
 
-},{"events":10}],6:[function(require,module,exports){
+},{"events":10}],11:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
+
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
+
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            if (ev.source === window && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
+
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
+    }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+}
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+
+},{}],10:[function(require,module,exports){
+(function(process){if (!process.EventEmitter) process.EventEmitter = function () {};
+
+var EventEmitter = exports.EventEmitter = process.EventEmitter;
+var isArray = typeof Array.isArray === 'function'
+    ? Array.isArray
+    : function (xs) {
+        return Object.prototype.toString.call(xs) === '[object Array]'
+    }
+;
+function indexOf (xs, x) {
+    if (xs.indexOf) return xs.indexOf(x);
+    for (var i = 0; i < xs.length; i++) {
+        if (x === xs[i]) return i;
+    }
+    return -1;
+}
+
+// By default EventEmitters will print a warning if more than
+// 10 listeners are added to it. This is a useful default which
+// helps finding memory leaks.
+//
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+var defaultMaxListeners = 10;
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!this._events) this._events = {};
+  this._events.maxListeners = n;
+};
+
+
+EventEmitter.prototype.emit = function(type) {
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events || !this._events.error ||
+        (isArray(this._events.error) && !this._events.error.length))
+    {
+      if (arguments[1] instanceof Error) {
+        throw arguments[1]; // Unhandled 'error' event
+      } else {
+        throw new Error("Uncaught, unspecified 'error' event.");
+      }
+      return false;
+    }
+  }
+
+  if (!this._events) return false;
+  var handler = this._events[type];
+  if (!handler) return false;
+
+  if (typeof handler == 'function') {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        var args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+    return true;
+
+  } else if (isArray(handler)) {
+    var args = Array.prototype.slice.call(arguments, 1);
+
+    var listeners = handler.slice();
+    for (var i = 0, l = listeners.length; i < l; i++) {
+      listeners[i].apply(this, args);
+    }
+    return true;
+
+  } else {
+    return false;
+  }
+};
+
+// EventEmitter is defined in src/node_events.cc
+// EventEmitter.prototype.emit() is also defined there.
+EventEmitter.prototype.addListener = function(type, listener) {
+  if ('function' !== typeof listener) {
+    throw new Error('addListener only takes instances of Function');
+  }
+
+  if (!this._events) this._events = {};
+
+  // To avoid recursion in the case that type == "newListeners"! Before
+  // adding it to the listeners, first emit "newListeners".
+  this.emit('newListener', type, listener);
+
+  if (!this._events[type]) {
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  } else if (isArray(this._events[type])) {
+
+    // Check for listener leak
+    if (!this._events[type].warned) {
+      var m;
+      if (this._events.maxListeners !== undefined) {
+        m = this._events.maxListeners;
+      } else {
+        m = defaultMaxListeners;
+      }
+
+      if (m && m > 0 && this._events[type].length > m) {
+        this._events[type].warned = true;
+        console.error('(node) warning: possible EventEmitter memory ' +
+                      'leak detected. %d listeners added. ' +
+                      'Use emitter.setMaxListeners() to increase limit.',
+                      this._events[type].length);
+        console.trace();
+      }
+    }
+
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  } else {
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  var self = this;
+  self.on(type, function g() {
+    self.removeListener(type, g);
+    listener.apply(this, arguments);
+  });
+
+  return this;
+};
+
+EventEmitter.prototype.removeListener = function(type, listener) {
+  if ('function' !== typeof listener) {
+    throw new Error('removeListener only takes instances of Function');
+  }
+
+  // does not use listeners(), so no side effect of creating _events[type]
+  if (!this._events || !this._events[type]) return this;
+
+  var list = this._events[type];
+
+  if (isArray(list)) {
+    var i = indexOf(list, listener);
+    if (i < 0) return this;
+    list.splice(i, 1);
+    if (list.length == 0)
+      delete this._events[type];
+  } else if (this._events[type] === listener) {
+    delete this._events[type];
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  if (arguments.length === 0) {
+    this._events = {};
+    return this;
+  }
+
+  // does not use listeners(), so no side effect of creating _events[type]
+  if (type && this._events && this._events[type]) this._events[type] = null;
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  if (!this._events) this._events = {};
+  if (!this._events[type]) this._events[type] = [];
+  if (!isArray(this._events[type])) {
+    this._events[type] = [this._events[type]];
+  }
+  return this._events[type];
+};
+
+})(require("__browserify_process"))
+},{"__browserify_process":11}],6:[function(require,module,exports){
 var block = require("./block");
 
 exports.create = function(conf){
@@ -991,7 +991,7 @@ exports.create = function(conf){
 
   return actor;
 };
-},{"./block":2}],12:[function(require,module,exports){
+},{"./block":3}],12:[function(require,module,exports){
 // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
  
@@ -1807,7 +1807,7 @@ function createShell(options) {
 }
 
 module.exports = createShell
-},{"events":10,"util":11,"./lib/raf-polyfill.js":12,"./lib/mousewheel-polyfill.js":13,"./lib/hrtime-polyfill.js":14,"domready":15,"vkey":16,"invert-hash":17,"uniq":18,"iota-array":19,"lower-bound":20}],15:[function(require,module,exports){
+},{"events":10,"util":9,"./lib/raf-polyfill.js":12,"./lib/mousewheel-polyfill.js":13,"./lib/hrtime-polyfill.js":14,"domready":15,"vkey":16,"invert-hash":17,"lower-bound":18,"uniq":19,"iota-array":20}],15:[function(require,module,exports){
 /*!
   * domready (c) Dustin Diaz 2012 - License MIT
   */
@@ -2015,19 +2015,63 @@ function invert(hash) {
 }
 
 module.exports = invert
-},{}],19:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict"
 
-function iota(n) {
-  var result = new Array(n)
-  for(var i=0; i<n; ++i) {
-    result[i] = i
+function lowerBound_cmp(array, value, compare, lo, hi) {
+  lo = lo|0
+  hi = hi|0
+  while(lo < hi) {
+    var m = (lo + hi) >>> 1
+      , v = compare(value, array[m])
+    if(v < 0) {
+      hi = m-1
+    } else if(v > 0) {
+      lo = m+1
+    } else {
+      hi = m
+    }
   }
-  return result
+  if(compare(array[lo], value) <= 0) {
+    return lo
+  }
+  return lo - 1
 }
 
-module.exports = iota
-},{}],18:[function(require,module,exports){
+function lowerBound_def(array, value, lo, hi) {
+  lo = lo|0
+  hi = hi|0
+  while(lo < hi) {
+    var m = (lo + hi) >>> 1
+    if(value < array[m]) {
+      hi = m-1
+    } else if(value > array[m]) {
+      lo = m+1
+    } else {
+      hi = m
+    }
+  }
+  if(array[lo] <= value) {
+    return lo
+  }
+  return lo - 1
+}
+
+function lowerBound(array, value, compare, lo, hi) {
+  if(!lo) {
+    lo = 0
+  }
+  if(typeof(hi) !== "number") {
+    hi = array.length-1
+  }
+  if(compare) {
+    return lowerBound_cmp(array, value, compare, lo, hi)
+  }
+  return lowerBound_def(array, value, lo, hi)
+}
+
+module.exports = lowerBound
+},{}],19:[function(require,module,exports){
 "use strict"
 
 function unique_pred(list, compare) {
@@ -2088,58 +2132,14 @@ module.exports = unique
 },{}],20:[function(require,module,exports){
 "use strict"
 
-function lowerBound_cmp(array, value, compare, lo, hi) {
-  lo = lo|0
-  hi = hi|0
-  while(lo < hi) {
-    var m = (lo + hi) >>> 1
-      , v = compare(value, array[m])
-    if(v < 0) {
-      hi = m-1
-    } else if(v > 0) {
-      lo = m+1
-    } else {
-      hi = m
-    }
+function iota(n) {
+  var result = new Array(n)
+  for(var i=0; i<n; ++i) {
+    result[i] = i
   }
-  if(compare(array[lo], value) <= 0) {
-    return lo
-  }
-  return lo - 1
+  return result
 }
 
-function lowerBound_def(array, value, lo, hi) {
-  lo = lo|0
-  hi = hi|0
-  while(lo < hi) {
-    var m = (lo + hi) >>> 1
-    if(value < array[m]) {
-      hi = m-1
-    } else if(value > array[m]) {
-      lo = m+1
-    } else {
-      hi = m
-    }
-  }
-  if(array[lo] <= value) {
-    return lo
-  }
-  return lo - 1
-}
-
-function lowerBound(array, value, compare, lo, hi) {
-  if(!lo) {
-    lo = 0
-  }
-  if(typeof(hi) !== "number") {
-    hi = array.length-1
-  }
-  if(compare) {
-    return lowerBound_cmp(array, value, compare, lo, hi)
-  }
-  return lowerBound_def(array, value, lo, hi)
-}
-
-module.exports = lowerBound
+module.exports = iota
 },{}]},{},[7])
 ;

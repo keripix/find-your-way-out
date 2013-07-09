@@ -99,8 +99,4 @@ describe("I'm aware", function(){
     expect(player.isMoving).toBeFalsy();
     expect(player.stopperLocation).toEqual("x");
   });
-
-  it("Should not stop if the block is not stopping the block eventhough the distance between them is 0", function(){
-
-  });
 });

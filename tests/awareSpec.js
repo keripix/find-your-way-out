@@ -1,12 +1,11 @@
 var aware = require("./../lib/aware"),
     block = require("./../lib/block"),
-    actor = block.create({
+    actor = require("./../lib/actor"),
+    player = actor.create({
       x: 10,
       y: 10,
       width: 10,
-      height: 10,
-      isMoving: true,
-      hasWon: false
+      height: 10
     }),
     blocks = [block.create({
       x: 50,
@@ -23,64 +22,67 @@ var aware = require("./../lib/aware"),
 
 describe("I'm aware", function(){
   beforeEach(function(){
-    actor = block.create({
+    player = actor.create({
       x: 10,
       y: 10,
       width: 10,
-      height: 10,
-      isMoving: true,
-      hasWon: false
+      height: 10
     });
+    player.isMoving = true;
   });
 
   it("Should stop when the distance is to close", function(){
-    for(var i=actor.x;i<=50;i+=5){
-      actor.moveX(5);
-      aware(actor, blocks, exit,{width:150,height:150});
+    var iterate = 0;
+    while(player.isMoving){
+      if (++iterate >= 10){
+        break;
+      }
+      player.moveX(5);
+      aware(player, blocks, exit,{width:150,height:150});
     }
-
-    expect(actor.isMoving).toBeFalsy();
+    expect(player.isMoving).toBeFalsy();
   });
 
-  it("Should only win if the actor has made a contact with the exit box", function(){
-    exit.y = 5;
-    exit.midY = 10;
-    for (var i=actor.x; i<=110;i+=5){
-      actor.moveX(5);
-      aware(actor, blocks, exit,{width:150,height:150});
+  it("Should only win if the player has made a contact with the exit box", function(){
+    exit.y = 10;
+    exit.midY = 15;
+    blocks[0].y = 100;
+    blocks[0].midY = 105;
+
+    while(player.x <= exit.x){
+      player.moveX(5);
+      aware(player, blocks, exit,{width:150,height:150});
     }
 
-    expect(actor.hasWon).toBeTruthy();
+    expect(player.hasWon).toBeTruthy();
   });
 
-  it("Should lose if the actor has gone out of the world", function(){
-    exit.x = 145;
-    exit.y = 50;
-    for (var i=actor.x; i<=160;i+=5){
-      actor.moveX(5);
-      aware(actor, blocks, {x: 145,y:50,midX:150,midY:55},{width:150,height:150});
+  it("Should lose if the player has gone out of the world", function(){
+    while(player.x <= 150){
+      player.moveX(5);
+      aware(player, blocks, {x: 145,y:50,midX:150,midY:55},{width:150,height:150});
     }
 
-    expect(actor.hasLost).toBeTruthy();
+    expect(player.hasLost).toBeTruthy();
   });
 
-  it("Should normalize actor position after collision with block", function(){
-    for (var i = actor.x; i <= blocks[0].x; i+= 7) {
-      actor.moveX(7);
-      aware(actor, blocks, exit, {width: 150, height: 150});
+  it("Should normalize player position after collision with block", function(){
+    while (player.x <= blocks[0].x) {
+      player.moveX(7);
+      aware(player, blocks, exit, {width: 150, height: 150});
     }
 
-    expect(actor.isMoving).toBeFalsy();
-    expect(actor.x).toEqual(50);
+    expect(player.isMoving).toBeFalsy();
+    expect(player.x).toEqual(50);
   });
 
   it("Should be able to detect where the stopper's location is", function(){
-    for(var i=actor.x;i<=50;i+=5){
-      actor.moveX(5);
-      aware(actor, blocks, exit,{width:150,height:150});
+    for(var i=player.x;i<=50;i+=5){
+      player.moveX(5);
+      aware(player, blocks, exit,{width:150,height:150});
     }
 
-    expect(actor.isMoving).toBeFalsy();
-    expect(actor.stopperLocation).toEqual("x");
+    expect(player.isMoving).toBeFalsy();
+    expect(player.stopperLocation).toEqual("x");
   });
 });

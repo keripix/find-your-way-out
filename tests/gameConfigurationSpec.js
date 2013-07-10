@@ -1,23 +1,23 @@
-var gameConfig = require("../lib/gameConfiguration"),
+var GameConfiguration = require("../lib/gameConfiguration"),
     conf = require("../conf/game");
 
 describe("Game Configuration", function(){
   describe("Reading Configuration", function(){
     it("Should parse the configuration correctly", function(){
-      var gameConf = gameConfig.init(conf);
+      var gameConf = new GameConfiguration(conf);
 
       expect(gameConf.world).toBeDefined();
       expect(gameConf.levels).toBeDefined();
     });
 
     // it("Should throw Error if bad conf is passed", function(){
-    //   expect(gameConfig.init({bla:1,bli:2})).toThrow();
+    //   expect(new GameConfiguration({bla:1,bli:2})).toThrow();
     // });
     //
 
     describe("Setting global configuration for each level's setting", function(){
       it("Should apply global settings to actor if none provided", function(){
-        var gameConf = gameConfig.init(conf);
+        var gameConf = new GameConfiguration(conf);
 
         expect(gameConf.getLevel(1).actor.width).toEqual(10);
         expect(gameConf.getLevel(1).actor.color).toEqual("#ECF0F1");
@@ -27,7 +27,7 @@ describe("Game Configuration", function(){
       });
 
       it("Should apply global settings to blocks if none provided", function(){
-        var gameConf = gameConfig.init(conf),
+        var gameConf = new GameConfiguration(conf),
             blocks = gameConf.getLevel(1).blocks;
 
         expect(blocks[0].width).toEqual(10);
@@ -41,7 +41,7 @@ describe("Game Configuration", function(){
     });
 
     it("Should add middle point for each item", function(){
-      var gameConf = gameConfig.init(conf),
+      var gameConf = new GameConfiguration(conf),
           blocks = gameConf.getLevel(1).blocks,
           actor = gameConf.getLevel(1).actor;
 
@@ -53,7 +53,7 @@ describe("Game Configuration", function(){
     });
 
     it("Should parsed the level correctly", function(){
-      var gameConf = gameConfig.init(conf);
+      var gameConf = new GameConfiguration(conf);
 
       expect(gameConf.getLevel("1")).toBeDefined();
       expect(gameConf.getLevel(1).hasWon).toBeFalsy();
@@ -68,7 +68,7 @@ describe("Game Configuration", function(){
     });
 
     it("Should not proceed when the level requested is more than what is available", function(){
-      var gameConf = gameConfig.init(conf),
+      var gameConf = new GameConfiguration(conf),
           level = gameConf.getLevel(10);
 
       expect(level).toBeUndefined();

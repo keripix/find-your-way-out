@@ -1,11 +1,11 @@
 var Aware = require("./../lib/aware"),
     Block = require("./../lib/block"),
-    actor = require("./../lib/actor"),
+    Actor = require("./../lib/actor"),
     aware, player, blocks, exit, world;
 
 describe("I'm aware", function(){
   beforeEach(function(){
-    player = actor.create({
+    player = new Actor({
       x: 10,
       y: 10,
       width: 10,

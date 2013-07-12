@@ -27,7 +27,7 @@ module.exports = {
       ],
       actor: [{
         x: 300,
-        y: 580,
+        y: 580
       }],
       exit: [{
         x: 590,

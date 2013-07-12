@@ -42,11 +42,7 @@ describe("Game Configuration", function(){
 
     it("Should add middle point for each item", function(){
       var gameConf = new GameConfiguration(conf),
-          blocks = gameConf.getLevel(1).blocks,
-          actor = gameConf.getLevel(1).actor;
-
-      expect(actor.midX).toEqual(305);
-      expect(actor.midY).toEqual(585);
+          blocks = gameConf.getLevel(1).blocks;
 
       expect(blocks[0].midX).toEqual(305);
       expect(blocks[0].midY).toEqual(295);

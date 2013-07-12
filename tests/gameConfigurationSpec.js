@@ -22,8 +22,8 @@ describe("Game Configuration", function(){
         expect(gameConf.getLevel(1).actor.width).toEqual(10);
         expect(gameConf.getLevel(1).actor.color).toEqual("#ECF0F1");
 
-        expect(gameConf.getLevel(2).out.width).toEqual(10);
-        expect(gameConf.getLevel(2).out.color).toEqual("#27AE60");
+        expect(gameConf.getLevel(2).exit.width).toEqual(10);
+        expect(gameConf.getLevel(2).exit.color).toEqual("#27AE60");
       });
 
       it("Should apply global settings to blocks if none provided", function(){

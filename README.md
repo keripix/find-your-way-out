@@ -1,5 +1,7 @@
 # Find Your Way Out
 
+![](pics/find-your-way-out.jpeg)
+
 A simple game I made in order to try out game-shell created by @mikolalysenko. This project is also my first try at using browserify. So, lets rock n roll.
 
 The purpose of this game is to get the white box to the green box. Easy Game.

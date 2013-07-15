@@ -11,13 +11,13 @@
 // Lets just make this file as a place to initiate the modules
 // used by this game
 var shell = require("game-shell")(),
-    GameConfiguration = require("./gameConfiguration"),
-    worldGenerator = require("./worldGenerator"),
-    conf = require("../conf/game"),
-    Aware = require("./aware"),
-    GamePlay = require("./gamePlay");
+    GameConfiguration = require("./lib/gameConfiguration"),
+    worldGenerator = require("./lib/worldGenerator"),
+    conf = require("./conf/game"),
+    Aware = require("./lib/aware"),
+    GamePlay = require("./lib/gamePlay");
 
-var version = "0.3.6";
+var version = "0.3.8";
 
 // Initiate shell
 shell.on("init", function(){

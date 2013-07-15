@@ -2,6 +2,7 @@ module.exports = {
   world: {
     width: 600,
     height: 600,
+    speed: 10,
     actor: {
       width: 10,
       height: 10,

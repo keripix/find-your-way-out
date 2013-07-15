@@ -69,10 +69,15 @@ What if, in order to set the configuration of each level, I just need to write t
       ]
     }
 
+## PROGRESS
+1. Each block has its own draw method to draw itself to the canvas
+2. Each block has its own collision handler.
+3. [Level Editor](https://github.com/keripix/fywo-level-editor)
+
 ## TODO
 
 1. Make it more challenging? :p
-2. Level Editor :D
+2. ~~Level Editor :D~~ [DONE](https://github.com/keripix/fywo-level-editor)
 3. Use countdown
 4. Make it more pretty?
 

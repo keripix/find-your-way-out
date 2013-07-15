@@ -54,7 +54,7 @@ describe("I'm aware", function(){
       }
     }
 
-    expect(aware.emit).toHaveBeenCalledWith("playerBlocked", player, blocks[0]);
+    expect(aware.emit).toHaveBeenCalled();
   });
 
   it("Should only win if the player has made a contact with the exit box", function(){
@@ -110,36 +110,4 @@ describe("I'm aware", function(){
 
     expect(aware.emit).toHaveBeenCalledWith("playerOut", player);
   });
-
-  it("Should normalize player position after collision with block", function(){
-    var called = false;
-
-    aware.on("playerBlocked", function(){
-      called = true;
-    });
-
-    while (true) {
-      player.moveX(7);
-      aware.observe();
-
-      if (called){
-        break;
-      }
-    }
-
-    expect(player.x).toEqual(40);
-  });
-
-  it("Should be able to detect where the stopper's location is", function(){
-    for(var i=player.x;i<=50;i+=5){
-      player.moveX(5);
-      aware.observe();
-    }
-
-    expect(player.stopperLocation).toEqual("x");
-  });
-
-  // it("Should not stop if the block is not stopping the block eventhough the distance between them is 0", function(){
-
-  // });
 });

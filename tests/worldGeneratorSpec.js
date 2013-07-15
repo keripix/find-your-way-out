@@ -5,7 +5,7 @@ describe("Generating World", function(){
   describe("Parsing Position", function(){
     it("Should parse position correctly when passed an object", function(){
 
-      var positions = wg.parsePosition({x: 59, y: 21});
+      var positions = wg.parseBlocks({x: 59, y: 21});
 
       expect(positions[0].x).toEqual(59);
       expect(positions[0].y).toEqual(21);
@@ -14,7 +14,7 @@ describe("Generating World", function(){
     });
 
     it("Should parse positions correctly when passed an array", function(){
-      var positions = wg.parsePosition([{x: 5, y: 5},{x: 6, y: 6}]);
+      var positions = wg.parseBlocks([{x: 5, y: 5},{x: 6, y: 6}]);
 
       expect(positions.length).toEqual(2);
 

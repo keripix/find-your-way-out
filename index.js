@@ -17,7 +17,7 @@ var shell = require("game-shell")(),
     Aware = require("./lib/aware"),
     GamePlay = require("./lib/gamePlay");
 
-var VERSION = "0.3.9";
+var VERSION = "0.3.10";
 
 // Initiate shell
 shell.on("init", function(){

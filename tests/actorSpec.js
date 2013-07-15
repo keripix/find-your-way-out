@@ -1,4 +1,4 @@
-var Actor = require("./../lib/actor"),
+var Actor = require("./../lib/blocks/actor"),
     conf = {
       x: 10,
       y: 10,

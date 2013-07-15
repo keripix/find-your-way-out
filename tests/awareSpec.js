@@ -1,6 +1,6 @@
 var Aware = require("./../lib/aware"),
-    Block = require("./../lib/block"),
-    Actor = require("./../lib/actor"),
+    Block = require("./../lib/blocks/block"),
+    Actor = require("./../lib/blocks/actor"),
     aware = new Aware(),
     player, blocks, exit, world;
 

@@ -1,4 +1,4 @@
-var Block = require("./../lib/block"),
+var Block = require("./../lib/blocks/block"),
     conf = {
       x: 10,
       y: 10,

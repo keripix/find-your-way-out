@@ -1,7 +1,8 @@
 var Aware = require("./../lib/aware"),
-    Block = require("./../lib/block"),
-    Actor = require("./../lib/actor"),
-    aware, player, blocks, exit, world;
+    Block = require("./../lib/blocks/block"),
+    Actor = require("./../lib/blocks/actor"),
+    aware = new Aware(),
+    player, blocks, exit, world;
 
 describe("I'm aware", function(){
   beforeEach(function(){
@@ -29,7 +30,7 @@ describe("I'm aware", function(){
 
     world = {width: 150, height: 150};
 
-    aware = new Aware(player, blocks, exit, world);
+    aware.setObserved(player, blocks, exit, world);
   });
 
   afterEach(function(){
@@ -38,15 +39,22 @@ describe("I'm aware", function(){
 
   // global
   it("Should stop when the distance is to close", function(){
+    var called = false;
+    spyOn(aware, "emit").andCallThrough();
+
+    aware.on("playerBlocked", function(){
+      called = true;
+    });
+
     while(true){
       player.moveX(5);
       aware.observe();
-      if (!player.isMoving){
+      if (called){
         break;
       }
     }
 
-    expect(player.isMoving).toBeFalsy();
+    expect(aware.emit).toHaveBeenCalled();
   });
 
   it("Should only win if the player has made a contact with the exit box", function(){
@@ -55,16 +63,24 @@ describe("I'm aware", function(){
     blocks[0].y = 100;
     blocks[0].midY = 105;
 
-    while(player.x <= exit.x){
+    var called = false;
+
+    spyOn(aware, "emit").andCallThrough();
+
+    aware.on("playerExit", function(){
+      called = true;
+    });
+
+    while(true){
       player.moveX(5);
       aware.observe();
 
-      if (!player.isMoving){
+      if (called){
         break;
       }
     }
 
-    expect(player.hasWon).toBeTruthy();
+    expect(aware.emit).toHaveBeenCalledWith("playerExit", player);
   });
 
   it("Should lose if the player has gone out of the world", function(){
@@ -75,41 +91,23 @@ describe("I'm aware", function(){
     exit.midX = 150;
     exit.midY = 55;
 
+    var called = false;
+
+    spyOn(aware, "emit").andCallThrough();
+
+    aware.on("playerOut", function(){
+      called = true;
+    });
+
     while(true){
       player.moveX(5);
       aware.observe();
-      if (!player.isMoving){
+
+      if (called){
         break;
       }
     }
 
-    expect(player.hasLost).toBeTruthy();
-  });
-
-  it("Should normalize player position after collision with block", function(){
-    while (true) {
-      player.moveX(7);
-      aware.observe();
-
-      if (!player.isMoving){
-        break;
-      }
-    }
-
-    expect(player.x).toEqual(40);
-  });
-
-  it("Should be able to detect where the stopper's location is", function(){
-    for(var i=player.x;i<=50;i+=5){
-      player.moveX(5);
-      aware.observe();
-    }
-
-    expect(player.isMoving).toBeFalsy();
-    expect(player.stopperLocation).toEqual("x");
-  });
-
-  it("Should not stop if the block is not stopping the block eventhough the distance between them is 0", function(){
-
+    expect(aware.emit).toHaveBeenCalledWith("playerOut", player);
   });
 });

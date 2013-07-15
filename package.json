@@ -1,7 +1,7 @@
 {
   "name": "find-your-way-out",
   "description": "A simple game to find your way out",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "homepage": "https://github.com/keripix/find-your-way-out",
   "author": {
     "name": "A. Akbar Hidayat",
@@ -20,12 +20,12 @@
       "url": "https://github.com/keripix/find-your-way-out/blob/master/LICENSE-MIT"
     }
   ],
-  "main": "lib/find-your-way-out.js",
+  "main": "index.js",
   "engines": {
     "node": ">= 0.8.0"
   },
   "scripts": {
-    "build": "browserify lib/find-your-way-out.js -o fywo.js && uglifyjs fywo.js -m -o fywo.min.js"
+    "build": "browserify index.js -o fywo.js && uglifyjs fywo.js -m -o fywo.min.js"
   },
   "keywords": [],
   "dependencies": {

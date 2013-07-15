@@ -1,7 +1,8 @@
 var Aware = require("./../lib/aware"),
     Block = require("./../lib/block"),
     Actor = require("./../lib/actor"),
-    aware, player, blocks, exit, world;
+    aware = new Aware(),
+    player, blocks, exit, world;
 
 describe("I'm aware", function(){
   beforeEach(function(){
@@ -29,7 +30,7 @@ describe("I'm aware", function(){
 
     world = {width: 150, height: 150};
 
-    aware = new Aware(player, blocks, exit, world);
+    aware.setObserved(player, blocks, exit, world);
   });
 
   afterEach(function(){

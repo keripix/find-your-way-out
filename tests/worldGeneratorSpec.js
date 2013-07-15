@@ -1,44 +1,31 @@
 var wg = require("../lib/worldGenerator"),
+    Block = require("../lib/blocks/block"),
     Canvas = require("canvas");
 
 describe("Generating World", function(){
-  describe("Parsing Position", function(){
-    it("Should parse position correctly when passed an object", function(){
-
-      var positions = wg.parseBlocks({x: 59, y: 21});
-
-      expect(positions[0].x).toEqual(59);
-      expect(positions[0].y).toEqual(21);
-      expect(positions[0].width).toEqual(10);
-      expect(positions[0].height).toEqual(10);
-    });
-
-    it("Should parse positions correctly when passed an array", function(){
-      var positions = wg.parseBlocks([{x: 5, y: 5},{x: 6, y: 6}]);
-
-      expect(positions.length).toEqual(2);
-
-      var pos1 = positions[0],
-          pos2 = positions[1];
-
-      expect(pos1.x).toEqual(5);
-      expect(pos1.width).toEqual(10);
-
-      expect(pos2.x).toEqual(6);
-      expect(pos2.width).toEqual(10);
-    });
-  });
-
   describe("Placing items on canvas", function(){
-    var canvas;
+    var canvas,
+        blocks;
 
     beforeEach(function(){
       canvas = new Canvas(600, 600);
+      blocks = [new Block({
+        x: 50,
+        y: 50,
+        color:"rgb(212,213,214)",
+        width: 10,
+        height: 10
+      }), new Block({
+        x: 121,
+        y: 31,
+        width: 10,
+        height:20,
+        color: "rgb(100,101,102)"
+      })];
     });
 
     it("Should place item correctly with the correct dimension", function(){
-      var positions = [{x: 50,y: 50, color:"rgb(212,213,214)"}, {x: 121, y: 31, width: 10, height:20, color: "rgb(100,101,102)"}],
-          drawn = wg.generate(canvas, positions);
+      var drawn = wg.generate(canvas, blocks);
 
       expect(drawn).toBeDefined();
 

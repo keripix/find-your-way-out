@@ -25,12 +25,9 @@ describe("Generating World", function(){
     });
 
     it("Should place item correctly with the correct dimension", function(){
-      var drawn = wg.generate(canvas, blocks);
+      wg.generate(canvas, blocks);
 
-      expect(drawn).toBeDefined();
-
-      // check wether the boxes has been drawn
-      var context = drawn.getContext('2d'),
+      var context = canvas.getContext('2d'),
           data1 = context.getImageData(50, 50, 5, 5).data, // the first box
           data2 = context.getImageData(121, 31, 10, 20).data; // the second box
 

@@ -21,7 +21,9 @@ describe("Collision Utilities", function(){
       var actor = {
             moving: {value: 20, direction: "x"},
             x: 42,
-            midX: 47
+            midX: 47,
+            width: 10,
+            height: 10
           },
           block = {
             width: 10,
@@ -42,11 +44,40 @@ describe("Collision Utilities", function(){
       expect(actor.midX).toEqual(65);
     });
 
+    it("Should place the player's position correctly (width=6)", function(){
+      var actor = {
+            moving: {value: 20, direction: "x"},
+            x: 46,
+            midX: 49,
+            width: 6,
+            height: 6
+          },
+          block = {
+            width: 10,
+            height: 10,
+            x: 50,
+            midX: 55
+          };
+
+      collisionUtil.normalizedAfterCollision(actor, block);
+      expect(actor.x).toEqual(44);
+      expect(actor.midX).toEqual(47);
+
+      actor.moving = {value: -20, direction: "x"};
+      actor.x = 58;
+      actor.midX = 61;
+      collisionUtil.normalizedAfterCollision(actor, block);
+      expect(actor.x).toEqual(60);
+      expect(actor.midX).toEqual(63);
+    });
+
     it("Should placed the player's position correctly (Y)", function(){
       var actor = {
             moving: {value: 20, direction: "y"},
             y: 44,
-            midY: 49
+            midY: 49,
+            width: 10,
+            height: 10
           },
           block = {
             width: 10,

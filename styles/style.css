@@ -1,3 +1,14 @@
+body{
+  margin: 0;
+  padding: 0;
+}
+
+#canvas-container{
+  float: left;
+  width: 680px;
+  height: 660px;
+}
+
 #fywo, #background {
   position: absolute;
   top: 20px;
@@ -12,4 +23,11 @@
 #background{
   z-index: 0;
   background-color: #FFA412;
+}
+
+#rightside-bar{
+  float: left;
+
+  padding-top: 20px;
+  margin-left: 50px;
 }

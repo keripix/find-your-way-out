@@ -17,7 +17,7 @@ var shell = require("game-shell")(),
     Aware = require("./lib/aware"),
     GamePlay = require("./lib/gamePlay");
 
-var version = "0.3.8";
+var VERSION = "0.3.8";
 
 // Initiate shell
 shell.on("init", function(){
@@ -25,7 +25,7 @@ shell.on("init", function(){
       canvas = document.getElementById("fywo"),
       canvasBackground = document.getElementById("background");
 
-  console.log("FYWO v" + version);
+  console.log("FYWO v" + VERSION);
   // add the canvas to the shell
   shell.element.appendChild(canvas);
   shell.element.appendChild(canvasBackground);
